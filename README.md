@@ -9,7 +9,7 @@ Repository: [Bleachigo/express-api-60](https://github.com/Bleachigo/express-api-
 Use Node.js 18 or newer (for the built-in `fetch` API) and npm.
 
 ```bash
-git clone https://github.com/Bleachigo/express-api-60.git
+git clone https://github.com/Bleachigo/express-pug-ejs-62
 cd express-api-60
 npm ci
 npm start
@@ -60,10 +60,10 @@ Middleware runs in this order:
 
 User and article routes require **HTTP Basic authentication**. Two accounts are built in:
 
-| Username | Password | Role |
-| --- | --- | --- |
-| `admin` | `admin123` | `admin` |
-| `user` | `user123` | `user` |
+| Username | Password   | Role    |
+| -------- | ---------- | ------- |
+| `admin`  | `admin123` | `admin` |
+| `user`   | `user123`  | `user`  |
 
 Any other credentials, or a missing/malformed `Authorization` header, are rejected. These are fixed demo credentials for testing only — there is no real user store or login flow.
 
@@ -73,9 +73,9 @@ Article routes additionally require the authenticated account to have the `admin
 
 ### Root
 
-| Method | Path | Response |
-| --- | --- | --- |
-| GET | `/` | `Get root route. Session visits: {count}` |
+| Method | Path | Response                                  |
+| ------ | ---- | ----------------------------------------- |
+| GET    | `/`  | `Get root route. Session visits: {count}` |
 
 No authentication is required. A new session starts with a visit count of 1.
 
@@ -85,40 +85,40 @@ All user routes require Basic auth with either account above.
 
 POST and PUT additionally require `username` and `password` in a JSON or URL-encoded body. Both must be strings containing at least one non-whitespace character.
 
-| Method | Path | Response |
-| --- | --- | --- |
-| GET | `/users` | Renders `src/views/users/index.pug` with the full user list from JSONPlaceholder |
-| POST | `/users` | `Post users route` |
-| GET | `/users/:userId` | Renders `src/views/users/details.pug` with the matching user from JSONPlaceholder |
-| PUT | `/users/:userId` | `Put user by Id route: {userId}` |
-| DELETE | `/users/:userId` | `Delete user by Id route: {userId}` |
+| Method | Path             | Response                                                                          |
+| ------ | ---------------- | --------------------------------------------------------------------------------- |
+| GET    | `/users`         | Renders `src/views/users/index.pug` with the full user list from JSONPlaceholder  |
+| POST   | `/users`         | `Post users route`                                                                |
+| GET    | `/users/:userId` | Renders `src/views/users/details.pug` with the matching user from JSONPlaceholder |
+| PUT    | `/users/:userId` | `Put user by Id route: {userId}`                                                  |
+| DELETE | `/users/:userId` | `Delete user by Id route: {userId}`                                               |
 
 ### Articles
 
 All article routes require Basic auth **and** the `admin` role.
 
-| Method | Path | Response |
-| --- | --- | --- |
-| GET | `/articles` | Renders `src/views/articles/index.ejs` with all posts from JSONPlaceholder |
-| POST | `/articles` | `Post articles route` |
-| GET | `/articles/:articleId` | Renders `src/views/articles/details.ejs` with the matching post from JSONPlaceholder |
-| PUT | `/articles/:articleId` | `Put article by Id route: {articleId}` |
-| DELETE | `/articles/:articleId` | `Delete article by Id route: {articleId}` |
+| Method | Path                   | Response                                                                             |
+| ------ | ---------------------- | ------------------------------------------------------------------------------------ |
+| GET    | `/articles`            | Renders `src/views/articles/index.ejs` with all posts from JSONPlaceholder           |
+| POST   | `/articles`            | `Post articles route`                                                                |
+| GET    | `/articles/:articleId` | Renders `src/views/articles/details.ejs` with the matching post from JSONPlaceholder |
+| PUT    | `/articles/:articleId` | `Put article by Id route: {articleId}`                                               |
+| DELETE | `/articles/:articleId` | `Delete article by Id route: {articleId}`                                            |
 
 ### Errors
 
-| Status | Condition | Response |
-| --- | --- | --- |
-| 400 | Missing or invalid user POST/PUT fields | `Username and password must be non-empty strings` |
-| 400 | Malformed JSON | Body parser's error message |
-| 401 | Missing `Authorization` header | `Authorization header is required` |
-| 401 | `Authorization` header is not `Basic ...` | `Basic authorization is required` |
-| 401 | Basic credentials don't match a known account | `Invalid credentials` |
-| 403 | Authenticated account is not `admin` on an article route | `Access denied` |
-| 404 | `:userId` / `:articleId` doesn't exist in JSONPlaceholder | `User not found` / `Article not found` |
-| 404 | Unmatched route after preceding middleware passes | `Route {method} {url} not found` |
-| 502 | The JSONPlaceholder API call fails for a reason other than not-found | `Failed to fetch articles` / `Failed to fetch users` / etc. |
-| 500 | Unexpected server error | `Internal server error` |
+| Status | Condition                                                            | Response                                                    |
+| ------ | -------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 400    | Missing or invalid user POST/PUT fields                              | `Username and password must be non-empty strings`           |
+| 400    | Malformed JSON                                                       | Body parser's error message                                 |
+| 401    | Missing `Authorization` header                                       | `Authorization header is required`                          |
+| 401    | `Authorization` header is not `Basic ...`                            | `Basic authorization is required`                           |
+| 401    | Basic credentials don't match a known account                        | `Invalid credentials`                                       |
+| 403    | Authenticated account is not `admin` on an article route             | `Access denied`                                             |
+| 404    | `:userId` / `:articleId` doesn't exist in JSONPlaceholder            | `User not found` / `Article not found`                      |
+| 404    | Unmatched route after preceding middleware passes                    | `Route {method} {url} not found`                            |
+| 502    | The JSONPlaceholder API call fails for a reason other than not-found | `Failed to fetch articles` / `Failed to fetch users` / etc. |
+| 500    | Unexpected server error                                              | `Internal server error`                                     |
 
 ## Testing with curl
 
