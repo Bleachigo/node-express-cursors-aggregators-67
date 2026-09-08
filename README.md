@@ -2,7 +2,7 @@
 
 A student project using Node.js and Express 5 to demonstrate routes, controllers, middleware, sessions, server-side view rendering (EJS/Pug), and calling an external API.
 
-Repository: [Bleachigo/express-api-60](https://github.com/Bleachigo/express-api-60)
+Repository: [Bleachigo/express-pug-ejs-62](https://github.com/Bleachigo/express-pug-ejs-62)
 
 ## Installation and startup
 
