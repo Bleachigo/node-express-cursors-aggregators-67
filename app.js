@@ -5,10 +5,12 @@ import cookieParser from 'cookie-parser';
 import rootRoutes from './src/routes/root.routes.js';
 import userRoutes from './src/routes/user.routes.js';
 import articleRoutes from './src/routes/article.routes.js';
+import themeRoutes from './src/routes/theme.routes.js';
 import { logRequest } from './src/middleware/logger.middleware.js';
 import { notFound } from './src/middleware/not-found.middleware.js';
 import { errorHandler } from './src/middleware/error.middleware.js';
 import { resTextFormat } from './src/middleware/res-text-format.middleware.js';
+import { themeMiddleware } from './src/middleware/theme.middleware.js';
 import session from 'express-session';
 import path from 'node:path';
 
@@ -23,6 +25,7 @@ app.use(logRequest);
 app.use(resTextFormat);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'student-project-local-secret',
@@ -35,10 +38,12 @@ app.use(
     },
   }),
 );
-app.use(cookieParser());
 app.use(express.static(path.join(import.meta.dirname, './public')));
+app.use(themeMiddleware);
+app.use('/theme', themeRoutes);
 app.use('/', rootRoutes);
 app.use('/users', userRoutes);
 app.use('/articles', articleRoutes);
+
 app.use(notFound);
 app.use(errorHandler);
