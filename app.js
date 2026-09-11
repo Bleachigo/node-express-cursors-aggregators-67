@@ -22,6 +22,7 @@ app.engine('ejs', ejs.__express);
 app.engine('pug', pug.__express);
 
 app.use(logRequest);
+app.use(express.static(path.join(import.meta.dirname, './public')));
 app.use(resTextFormat);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -38,7 +39,6 @@ app.use(
     },
   }),
 );
-app.use(express.static(path.join(import.meta.dirname, './public')));
 app.use(themeMiddleware);
 app.use('/theme', themeRoutes);
 app.use('/', rootRoutes);
