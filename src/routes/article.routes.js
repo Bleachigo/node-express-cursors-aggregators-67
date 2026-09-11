@@ -1,5 +1,5 @@
 import express from 'express';
-import { articleController } from '../controllers/articleController.js';
+import { articleController } from '../controllers/article.controller.js';
 import { basicAuth } from '../middleware/auth.middleware.js';
 import { checkArticleAccess } from '../middleware/article-access.middleware.js';
 
