@@ -9,6 +9,7 @@ import { notFound } from './src/middleware/not-found.middleware.js';
 import { errorHandler } from './src/middleware/error.middleware.js';
 import { resTextFormat } from './src/middleware/res-text-format.middleware.js';
 import session from 'express-session';
+import path from 'node:path';
 
 export const app = express();
 
@@ -33,6 +34,7 @@ app.use(
     },
   }),
 );
+app.use(express.static(path.join(import.meta.dirname, './public')));
 app.use('/', rootRoutes);
 app.use('/users', userRoutes);
 app.use('/articles', articleRoutes);
