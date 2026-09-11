@@ -1,6 +1,7 @@
 import express from 'express';
 import ejs from 'ejs';
 import pug from 'pug';
+import cookieParser from 'cookie-parser';
 import rootRoutes from './src/routes/rootRoutes.js';
 import userRoutes from './src/routes/userRoutes.js';
 import articleRoutes from './src/routes/articleRoutes.js';
@@ -34,6 +35,7 @@ app.use(
     },
   }),
 );
+app.use(cookieParser());
 app.use(express.static(path.join(import.meta.dirname, './public')));
 app.use('/', rootRoutes);
 app.use('/users', userRoutes);
