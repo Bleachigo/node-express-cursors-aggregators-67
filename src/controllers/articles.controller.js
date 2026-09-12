@@ -1,4 +1,4 @@
-import { articleService } from '../services/article.service.js';
+import { articleService } from '../services/articles.service.js';
 
 export const articleController = {
   async getArticles(req, res, next) {
