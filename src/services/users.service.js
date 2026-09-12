@@ -1,29 +1,19 @@
 import { AppError } from '../utils/AppError.js';
-
-const BASE_URL = 'https://jsonplaceholder.typicode.com';
+import { usersRepository } from '../repositories/users.repository.js';
 
 export const userService = {
+  async writeUser() {},
   async getAllUsers() {
-    const response = await fetch(`${BASE_URL}/users`);
-
-    if (!response.ok) {
-      throw new AppError('Failed to fetch users', 502);
-    }
-
-    return response.json();
+    return usersRepository.findAll();
   },
 
   async findUserById(userId) {
-    const response = await fetch(`${BASE_URL}/users/${userId}`);
+    const user = await usersRepository.findById(userId);
 
-    if (response.status === 404) {
-      throw new AppError('User not found', 404);
+    if (!user) {
+      throw new AppError(`User ${userId} not found`, 404);
     }
 
-    if (!response.ok) {
-      throw new AppError('Failed to fetch user by id', 502);
-    }
-
-    return response.json();
+    return user;
   },
 };
