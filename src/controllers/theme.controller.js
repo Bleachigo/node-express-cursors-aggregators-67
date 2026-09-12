@@ -4,7 +4,9 @@ export const themeController = {
   setTheme(req, res, next) {
     const { theme } = req.body;
 
-    if (!['light', 'dark'].includes(theme)) {
+    const allowedThemes = ['light', 'dark'];
+
+    if (!allowedThemes.includes(theme)) {
       return next(new AppError('Invalid theme', 400));
     }
 
