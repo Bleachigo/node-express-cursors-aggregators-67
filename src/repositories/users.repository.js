@@ -55,6 +55,22 @@ export const usersRepository = {
     return users[index];
   },
 
+  async replace(id, updates) {
+    const users = await readUsers();
+    const index = users.findIndex((user) => user.id === id);
+
+    if (index === -1) return undefined;
+
+    users[index] = {
+      id: id,
+      ...updates,
+    };
+
+    await writeUsers(users);
+
+    return users[index];
+  },
+
   async delete(id) {
     const users = await readUsers();
     const index = users.findIndex((user) => user.id === id);
