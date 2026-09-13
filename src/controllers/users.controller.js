@@ -1,6 +1,14 @@
 import { userService } from '../services/users.service.js';
 
 export const userController = {
+  async postUser(req, res, next) {
+    // try {
+    //   const user = await req.
+    // } catch (error) {
+    //   next(error);
+    // }
+  },
+
   async getUsers(req, res, next) {
     try {
       const users = await userService.getAllUsers();
@@ -10,9 +18,6 @@ export const userController = {
     } catch (error) {
       next(error);
     }
-  },
-  postUsers(req, res) {
-    res.send('Post users route');
   },
   async getUserById(req, res, next) {
     try {
