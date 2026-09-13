@@ -29,6 +29,9 @@ export const userController = {
   putUserById(req, res) {
     res.send(`Put user by Id route: ${req.params.userId}`);
   },
+  patchUserById(req, res) {
+    res.send(`Patch user by Id route: ${req.params.userId}`);
+  },
   deleteUserById(req, res) {
     res.send(`Delete user by Id route: ${req.params.userId}`);
   },
