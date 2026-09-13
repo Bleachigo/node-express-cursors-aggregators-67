@@ -2,7 +2,23 @@ import { AppError } from '../utils/AppError.js';
 import { usersRepository } from '../repositories/users.repository.js';
 
 export const userService = {
-  async writeUser() {},
+  async createUser(userData) {
+    const existingUser = await usersRepository.findByUsername(userData);
+
+    if (existingUser) {
+      throw new AppError('Username already exist', 409);
+    }
+
+    const user = {
+      id: crypto.randomUUID(),
+      username: userData.username,
+      password: userData.password,
+      role: 'user',
+    };
+
+    return usersRepository.create(user);
+  },
+
   async getAllUsers() {
     return usersRepository.findAll();
   },
@@ -15,5 +31,35 @@ export const userService = {
     }
 
     return user;
+  },
+
+  async updateUser(userId, userData) {
+    const updatedUser = await usersRepository.update(userId, userData);
+
+    if (!updatedUser) {
+      throw new AppError(`User ${userId} not found`, 404);
+    }
+
+    return updatedUser;
+  },
+
+  async replaceUser(userId, userData) {
+    const replacedUser = await usersRepository.replace(userId, userData);
+
+    if (!replacedUser) {
+      throw new AppError(`User ${userId} not found`, 404);
+    }
+
+    return replacedUser;
+  },
+
+  async deleteUser(userId) {
+    const deletedUser = await usersRepository.delete(userId);
+
+    if (!deletedUser) {
+      throw new AppError(`User ${userId} not exitsts`, 404);
+    }
+
+    return deletedUser;
   },
 };
