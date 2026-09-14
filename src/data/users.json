@@ -1,0 +1,13 @@
+[
+  {
+    "id": 4,
+    "username": "admin",
+    "role": "admin"
+  },
+  {
+    "id": "14c8ed5d-210d-465b-b0e3-f1680e408b09",
+    "username": "artem",
+    "passwordHash": "$2b$12$umgvUGs9fHTkwOgX.BlzP.6VlBegiylg1D5R3mjHvlMM.0rfNi71i",
+    "role": "user"
+  }
+]
