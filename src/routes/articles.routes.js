@@ -1,12 +1,12 @@
 import express from 'express';
 import { articleController } from '../controllers/articles.controller.js';
-import { basicAuth } from '../middleware/auth.middleware.js';
-import { checkArticleAccess } from '../middleware/article-access.middleware.js';
+import { authenticate } from '../middleware/auth.middleware.js';
+import { authorize } from '../middleware/authorization.middleware.js';
 
 const router = express.Router();
 
-router.use(basicAuth);
-router.use(checkArticleAccess);
+router.use(authenticate);
+router.use(authorize);
 
 router.get('/', articleController.getArticles);
 router.post('/', articleController.postArticles);

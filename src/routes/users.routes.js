@@ -1,11 +1,11 @@
 import express from 'express';
 import { userController } from '../controllers/users.controller.js';
-import { basicAuth } from '../middleware/auth.middleware.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 import { validateUserInput } from '../middleware/validate.middleware.js';
 
 const router = express.Router();
 
-router.use(basicAuth);
+router.use(authenticate);
 
 router.get('/', userController.getUsers);
 router.post('/', validateUserInput, userController.postUsers);
