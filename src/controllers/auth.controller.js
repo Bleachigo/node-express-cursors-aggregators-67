@@ -1,3 +1,5 @@
+import { authService } from '../services/auth.service.js';
+
 export const authController = {
   async registerUser(req, res, next) {
     try {
@@ -11,7 +13,7 @@ export const authController = {
         maxAge: 60 * 60 * 1000,
       });
 
-      res.status(200).json({ user });
+      res.status(201).json({ user });
     } catch (error) {
       next(error);
     }
@@ -29,7 +31,7 @@ export const authController = {
         maxAge: 60 * 60 * 1000,
       });
 
-      res.status(201).json({ user });
+      res.status(200).json({ user });
     } catch (error) {
       next(error);
     }
@@ -39,7 +41,13 @@ export const authController = {
     res.json({ user: req.user });
   },
 
-  async logout(req, res) {
-    res.clearCookie('accessToken');
+  async logout(req, res, next) {
+    try {
+      res.clearCookie('accessToken');
+
+      res.status(204).end();
+    } catch (error) {
+      next(error);
+    }
   },
 };
