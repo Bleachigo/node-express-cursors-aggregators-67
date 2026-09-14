@@ -1,6 +1,6 @@
-import jwt from 'jsonwebtoken';
 import { userRepository } from '../repositories/users.repository.js';
 import { AppError } from '../utils/AppError.js';
+import { verifyToken } from '../utils/jwt.js';
 
 export const authenticate = async (req, res, next) => {
   try {
@@ -10,7 +10,7 @@ export const authenticate = async (req, res, next) => {
       throw new AppError('Authentication required', 401);
     }
 
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = verifyToken(token);
 
     const user = await userRepository.findById(payload.sub);
 
@@ -26,6 +26,13 @@ export const authenticate = async (req, res, next) => {
 
     next();
   } catch (error) {
+    if (
+      error.name === 'JsonWebTokenError' ||
+      error.name === 'TokenExpiredError'
+    ) {
+      return next(new AppError('Invalid or expired token', 401));
+    }
+
     next(error);
   }
 };
