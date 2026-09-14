@@ -1,40 +1,31 @@
-import { Buffer } from 'node:buffer';
+import jwt from 'jsonwebtoken';
+import { userRepository } from '../repositories/users.repository.js';
 import { AppError } from '../utils/AppError.js';
 
-export const basicAuth = (req, res, next) => {
-  const authHeader = req.get('Authorization');
+export const authenticate = async (req, res, next) => {
+  try {
+    const token = req.cookies.accessToken;
 
-  if (!authHeader) {
-    return next(new AppError('Authorization header is required', 401));
-  }
+    if (!token) {
+      throw new AppError('Authentication required', 401);
+    }
 
-  if (!authHeader.startsWith('Basic ')) {
-    return next(new AppError('Basic authorization is required', 401));
-  }
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-  const encodedCredentials = authHeader.split(' ')[1];
+    const user = await userRepository.findById(payload.sub);
 
-  const credentials = Buffer.from(encodedCredentials, 'base64').toString(
-    'utf8',
-  );
+    if (!user) {
+      throw new AppError('User not found', 401);
+    }
 
-  const [username, password] = credentials.split(':');
-
-  if (username === 'admin' && password === 'admin123') {
     req.user = {
-      username,
-      role: 'admin',
+      id: user.id,
+      username: user.username,
+      role: user.role,
     };
-    return next();
-  }
 
-  if (username === 'user' && password === 'user123') {
-    req.user = {
-      username,
-      role: 'user',
-    };
-    return next();
+    next();
+  } catch (error) {
+    next(error);
   }
-
-  next(new AppError('Invalid credentials', 401));
 };
