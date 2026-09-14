@@ -6,6 +6,7 @@ import rootRoutes from './src/routes/root.routes.js';
 import userRoutes from './src/routes/users.routes.js';
 import articleRoutes from './src/routes/articles.routes.js';
 import themeRoutes from './src/routes/theme.routes.js';
+import { authRouter } from './src/routes/auth.routes.js';
 import { logRequest } from './src/middleware/logger.middleware.js';
 import { notFound } from './src/middleware/not-found.middleware.js';
 import { errorHandler } from './src/middleware/error.middleware.js';
@@ -40,6 +41,7 @@ app.use(
   }),
 );
 app.use(themeMiddleware);
+app.use('/auth', authRouter);
 app.use('/theme', themeRoutes);
 app.use('/', rootRoutes);
 app.use('/users', userRoutes);
