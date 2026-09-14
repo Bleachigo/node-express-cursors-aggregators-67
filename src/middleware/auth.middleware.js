@@ -1,4 +1,4 @@
-import { userRepository } from '../repositories/users.repository.js';
+import { usersRepository } from '../repositories/users.repository.js';
 import { AppError } from '../utils/AppError.js';
 import { verifyToken } from '../utils/jwt.js';
 
@@ -12,7 +12,7 @@ export const authenticate = async (req, res, next) => {
 
     const payload = verifyToken(token);
 
-    const user = await userRepository.findById(payload.sub);
+    const user = await usersRepository.findById(payload.sub);
 
     if (!user) {
       throw new AppError('User not found', 401);
