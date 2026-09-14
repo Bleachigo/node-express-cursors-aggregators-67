@@ -1,12 +1,8 @@
 import { userService } from '../services/users.service.js';
 
 export const userController = {
-  async postUser(req, res, next) {
-    // try {
-    //   const user = await req.
-    // } catch (error) {
-    //   next(error);
-    // }
+  async postUsers(req, res, next) {
+    res.send(`Post user by id: ${req.params.userId}`);
   },
 
   async getUsers(req, res, next) {
