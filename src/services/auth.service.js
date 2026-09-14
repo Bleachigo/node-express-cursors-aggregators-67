@@ -14,7 +14,7 @@ export const authService = {
     const existingUser = await usersRepository.findByUsername(username);
 
     if (existingUser) {
-      throw new AppError('Invalid username or password', 401);
+      throw new AppError('Username already exists', 409);
     }
 
     const passwordHash = await hashPassword(password);
@@ -40,7 +40,7 @@ export const authService = {
     const user = await usersRepository.findByUsername(username);
 
     if (!user) {
-      throw new AppError('User not found', 404);
+      throw new AppError('Invalid username or password', 401);
     }
 
     const isPasswordValid = await verifyPassword(password, user.passwordHash);
