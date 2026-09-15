@@ -1,13 +1,16 @@
 [
   {
-    "id": 4,
-    "username": "admin",
-    "role": "admin"
-  },
-  {
     "id": "14c8ed5d-210d-465b-b0e3-f1680e408b09",
     "username": "artem",
     "passwordHash": "$2b$12$umgvUGs9fHTkwOgX.BlzP.6VlBegiylg1D5R3mjHvlMM.0rfNi71i",
-    "role": "user"
+    "role": "user",
+    "password": "123456",
+    "email": "artem232@mail.com"
+  },
+  {
+    "id": "23821f2e-6d22-4685-8e66-b907655f344a",
+    "username": "admin",
+    "passwordHash": "$2b$12$omW3QW7IavrOiiTc6LHCpOBQRyRLvzWUo2t/mO.eKWU4HgVdSnkqy",
+    "role": "admin"
   }
 ]
