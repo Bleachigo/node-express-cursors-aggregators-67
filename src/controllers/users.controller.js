@@ -33,11 +33,11 @@ export const userController = {
     res.send(`Put user by Id route: ${req.params.userId}`);
   },
 
-  patchUserById(req, res, next) {
+  async patchUserById(req, res, next) {
     try {
       const { userId } = req.params;
 
-      const updatedUser = userService.updateUser(userId, req.body);
+      const updatedUser = await userService.updateUser(userId, req.body);
 
       res.json(updatedUser);
     } catch (error) {
