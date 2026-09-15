@@ -2,7 +2,7 @@
 
 A student project using Node.js and Express 5 to demonstrate routes, controllers, middleware, JWT authentication, cookies, server-side view rendering (EJS/Pug), and calling an external API.
 
-Repository: [Bleachigo/express-pug-ejs-62](https://github.com/Bleachigo/express-pug-ejs-62)
+Repository: [Bleachigo/nodejs-express-63](https://github.com/Bleachigo/nodejs-express-63)
 
 ## Installation and startup
 
@@ -20,11 +20,11 @@ The server listens on the port set by `PORT` in `.env` (defaults to `3000` in `.
 
 ### Environment variables
 
-| Variable         | Required | Description                                                      |
-| ---------------- | -------- | ------------------------------------------------------------------ |
-| `PORT`           | No       | Port the server listens on.                                      |
+| Variable         | Required | Description                                                                                                                                    |
+| ---------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`           | No       | Port the server listens on.                                                                                                                    |
 | `SESSION_SECRET` | Yes      | Secret used to sign the session cookie. No built-in default — the app relies on `express-session`, which throws at startup if this is missing. |
-| `JWT_SECRET`     | Yes      | Secret used to sign/verify JWTs issued at register/login.        |
+| `JWT_SECRET`     | Yes      | Secret used to sign/verify JWTs issued at register/login.                                                                                      |
 
 See `.env.example` for the expected format.
 
@@ -115,33 +115,33 @@ No authentication is required.
 
 ### Theme
 
-| Method | Path     | Body                        | Response                                       |
-| ------ | -------- | ---------------------------- | ----------------------------------------------- |
-| POST   | `/theme` | `{ "theme": "light"|"dark" }` | `{ "message": "Theme saved", "theme": "..." }`, sets the `theme` cookie |
+| Method | Path     | Body                | Response  |
+| ------ | -------- | ------------------- | --------- |
+| POST   | `/theme` | `{ "theme": "light" | "dark" }` | `{ "message": "Theme saved", "theme": "..." }`, sets the `theme` cookie |
 
 No authentication is required.
 
 ### Auth
 
-| Method | Path            | Auth required | Body                              | Response                                   |
-| ------ | --------------- | -------------- | ---------------------------------- | -------------------------------------------- |
+| Method | Path             | Auth required | Body                                             | Response                                             |
+| ------ | ---------------- | ------------- | ------------------------------------------------ | ---------------------------------------------------- |
 | POST   | `/auth/register` | No            | `{ "username", "password" }` (non-empty strings) | `201` `{ "user": {...} }`, sets `accessToken` cookie |
-| POST   | `/auth/login`     | No            | `{ "username", "password" }`      | `200` `{ "user": {...} }`, sets `accessToken` cookie |
-| GET    | `/auth/me`        | Yes           | —                                   | `{ "user": {...} }`                          |
-| POST   | `/auth/logout`    | No            | —                                   | `204`, clears `accessToken` cookie           |
+| POST   | `/auth/login`    | No            | `{ "username", "password" }`                     | `200` `{ "user": {...} }`, sets `accessToken` cookie |
+| GET    | `/auth/me`       | Yes           | —                                                | `{ "user": {...} }`                                  |
+| POST   | `/auth/logout`   | No            | —                                                | `204`, clears `accessToken` cookie                   |
 
 ### Users
 
 All routes require a valid `accessToken` (JWT). `PUT`/`PATCH` additionally require the `admin` role.
 
-| Method | Path             | Auth        | Body                          | Response                                                                           |
-| ------ | ---------------- | ----------- | ------------------------------ | ------------------------------------------------------------------------------------ |
-| GET    | `/users`         | user        | —                              | Renders `src/views/users/index.pug` with the full JSONPlaceholder user list          |
-| POST   | `/users`         | user        | `{ "username", "password" }`   | `Post user by id: {userId}` (placeholder response; does not persist)                 |
-| GET    | `/users/:userId` | user        | —                              | Renders `src/views/users/details.pug` with the matching JSONPlaceholder user          |
-| PUT    | `/users/:userId` | admin       | `{ "username", "password" }`   | `Put user by Id route: {userId}` (placeholder response; does not persist)            |
-| PATCH  | `/users/:userId` | admin       | `{ "username", "password" }`   | Updates and returns the stored user record (JSON) from `src/data/users.json`         |
-| DELETE | `/users/:userId` | user        | —                              | `Delete user by Id route: {userId}` (placeholder response; does not persist)         |
+| Method | Path             | Auth  | Body                         | Response                                                                     |
+| ------ | ---------------- | ----- | ---------------------------- | ---------------------------------------------------------------------------- |
+| GET    | `/users`         | user  | —                            | Renders `src/views/users/index.pug` with the full JSONPlaceholder user list  |
+| POST   | `/users`         | user  | `{ "username", "password" }` | `Post user by id: {userId}` (placeholder response; does not persist)         |
+| GET    | `/users/:userId` | user  | —                            | Renders `src/views/users/details.pug` with the matching JSONPlaceholder user |
+| PUT    | `/users/:userId` | admin | `{ "username", "password" }` | `Put user by Id route: {userId}` (placeholder response; does not persist)    |
+| PATCH  | `/users/:userId` | admin | `{ "username", "password" }` | Updates and returns the stored user record (JSON) from `src/data/users.json` |
+| DELETE | `/users/:userId` | user  | —                            | `Delete user by Id route: {userId}` (placeholder response; does not persist) |
 
 Note: `GET`/`POST`/`PUT`/`DELETE` render or reference data from the JSONPlaceholder demo API, while `PATCH` is the one route currently wired to the local `src/data/users.json` store.
 
@@ -160,17 +160,17 @@ All article routes require a valid `accessToken` **and** the `admin` role.
 ### Errors
 
 | Status | Condition                                                            | Response                                                    |
-| ------ | ---------------------------------------------------------------------- | ------------------------------------------------------------ |
-| 400    | Missing or invalid `username`/`password` fields                        | `Username and password must be non-empty strings`           |
-| 400    | Malformed JSON                                                         | Body parser's error message                                 |
-| 401    | Missing/invalid/expired `accessToken` cookie                           | `Authentication required` / `Invalid or expired token`      |
-| 401    | Login with unknown username or wrong password                         | `Invalid username or password`                               |
-| 403    | Authenticated account lacks the `admin` role on a protected route      | `Access denied`                                               |
-| 404    | `:userId` / `:articleId` doesn't exist                                 | `User not found` / `Article not found`                        |
-| 404    | Unmatched route after preceding middleware passes                      | `Route {method} {url} not found`                              |
-| 409    | Registering a username that already exists                             | `Username already exists`                                     |
-| 502    | The JSONPlaceholder API call fails for a reason other than not-found   | `Failed to fetch articles` / `Failed to fetch users` / etc.    |
-| 500    | Unexpected server error                                                | `Internal server error`                                       |
+| ------ | -------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 400    | Missing or invalid `username`/`password` fields                      | `Username and password must be non-empty strings`           |
+| 400    | Malformed JSON                                                       | Body parser's error message                                 |
+| 401    | Missing/invalid/expired `accessToken` cookie                         | `Authentication required` / `Invalid or expired token`      |
+| 401    | Login with unknown username or wrong password                        | `Invalid username or password`                              |
+| 403    | Authenticated account lacks the `admin` role on a protected route    | `Access denied`                                             |
+| 404    | `:userId` / `:articleId` doesn't exist                               | `User not found` / `Article not found`                      |
+| 404    | Unmatched route after preceding middleware passes                    | `Route {method} {url} not found`                            |
+| 409    | Registering a username that already exists                           | `Username already exists`                                   |
+| 502    | The JSONPlaceholder API call fails for a reason other than not-found | `Failed to fetch articles` / `Failed to fetch users` / etc. |
+| 500    | Unexpected server error                                              | `Internal server error`                                     |
 
 ## Testing with curl
 
