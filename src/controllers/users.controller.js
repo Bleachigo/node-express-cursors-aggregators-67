@@ -15,6 +15,7 @@ export const userController = {
       next(error);
     }
   },
+
   async getUserById(req, res, next) {
     try {
       const { userId } = req.params;
@@ -27,12 +28,23 @@ export const userController = {
       next(error);
     }
   },
+
   putUserById(req, res) {
     res.send(`Put user by Id route: ${req.params.userId}`);
   },
-  patchUserById(req, res) {
-    res.send(`Patch user by Id route: ${req.params.userId}`);
+
+  patchUserById(req, res, next) {
+    try {
+      const { userId } = req.params;
+
+      const updatedUser = userService.updateUser(userId, req.body);
+
+      res.json(updatedUser);
+    } catch (error) {
+      next(error);
+    }
   },
+
   deleteUserById(req, res) {
     res.send(`Delete user by Id route: ${req.params.userId}`);
   },
