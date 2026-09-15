@@ -3,7 +3,9 @@ import { usersRepository } from '../repositories/users.repository.js';
 
 export const userService = {
   async createUser(userData) {
-    const existingUser = await usersRepository.findByUsername(userData);
+    const existingUser = await usersRepository.findByUsername(
+      userData.username,
+    );
 
     if (existingUser) {
       throw new AppError('Username already exist', 409);
