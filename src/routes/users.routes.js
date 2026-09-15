@@ -11,7 +11,7 @@ router.get('/', userController.getUsers);
 router.post('/', validateUserInput, userController.postUsers);
 router.get('/:userId', userController.getUserById);
 router.put('/:userId', validateUserInput, userController.putUserById);
-router.patch('/:userId', userController.patchUserById);
+router.patch('/:userId', validateUserInput, userController.patchUserById);
 router.delete('/:userId', userController.deleteUserById);
 
 export default router;
