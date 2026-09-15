@@ -9,8 +9,8 @@ Repository: [Bleachigo/nodejs-express-63](https://github.com/Bleachigo/nodejs-ex
 Use Node.js 18 or newer (for the built-in `fetch` API) and npm.
 
 ```bash
-git clone https://github.com/Bleachigo/express-pug-ejs-62
-cd express-api-60
+git clone https://github.com/Bleachigo/nodejs-express-63.git
+cd nodejs-express-63
 npm ci
 cp .env.example .env   # then edit .env with your own secrets
 npm start
@@ -31,7 +31,7 @@ See `.env.example` for the expected format.
 ## Project structure
 
 ```text
-express-api-60/
+nodejs-express-63/
 ├── app.js                  # Express setup and middleware registration
 ├── server.js               # Starts the server
 ├── package.json
@@ -53,7 +53,7 @@ express-api-60/
         └── password.js       # Hash/verify passwords with bcrypt
 ```
 
-The application follows an MVC-style separation between routing, controllers, and services. Registered users are persisted locally in `src/data/users.json` (a stand-in for a real database). Article data is not stored locally: `GET` article requests fetch live data from the [JSONPlaceholder](https://jsonplaceholder.typicode.com) demo API and render it into HTML views. Article write operations (`POST`/`PUT`/`DELETE`) are simulated and return plain-text acknowledgements only.
+The application follows an MVC-style separation between routing, controllers, and services. Registered users are persisted locally in `src/data/users.json` (a stand-in for a real database); `GET /users`, `GET /users/:userId`, and `PATCH /users/:userId` all read/write this file, while `POST`/`PUT`/`DELETE` on `/users` are still placeholder text responses that don't touch it. Article data is not stored locally: `GET` article requests fetch live data from the [JSONPlaceholder](https://jsonplaceholder.typicode.com) demo API and render it into HTML views. Article write operations (`POST`/`PUT`/`DELETE`) are simulated and return plain-text acknowledgements only.
 
 ## Middleware
 
@@ -134,16 +134,16 @@ No authentication is required.
 
 All routes require a valid `accessToken` (JWT). `PUT`/`PATCH` additionally require the `admin` role.
 
-| Method | Path             | Auth  | Body                         | Response                                                                     |
-| ------ | ---------------- | ----- | ---------------------------- | ---------------------------------------------------------------------------- |
-| GET    | `/users`         | user  | —                            | Renders `src/views/users/index.pug` with the full JSONPlaceholder user list  |
-| POST   | `/users`         | user  | `{ "username", "password" }` | `Post user by id: {userId}` (placeholder response; does not persist)         |
-| GET    | `/users/:userId` | user  | —                            | Renders `src/views/users/details.pug` with the matching JSONPlaceholder user |
-| PUT    | `/users/:userId` | admin | `{ "username", "password" }` | `Put user by Id route: {userId}` (placeholder response; does not persist)    |
-| PATCH  | `/users/:userId` | admin | `{ "username", "password" }` | Updates and returns the stored user record (JSON) from `src/data/users.json` |
-| DELETE | `/users/:userId` | user  | —                            | `Delete user by Id route: {userId}` (placeholder response; does not persist) |
+| Method | Path             | Auth  | Body                         | Response                                                                       |
+| ------ | ---------------- | ----- | ---------------------------- | ------------------------------------------------------------------------------- |
+| GET    | `/users`         | user  | —                            | Renders `src/views/users/index.pug` with all users from `src/data/users.json` |
+| POST   | `/users`         | user  | `{ "username", "password" }` | `Post user by id: {userId}` (placeholder response; does not persist)          |
+| GET    | `/users/:userId` | user  | —                            | Renders `src/views/users/details.pug` with the matching user from `src/data/users.json` |
+| PUT    | `/users/:userId` | admin | `{ "username", "password" }` | `Put user by Id route: {userId}` (placeholder response; does not persist)     |
+| PATCH  | `/users/:userId` | admin | `{ "username", "password" }` | Updates and returns the stored user record (JSON) from `src/data/users.json`  |
+| DELETE | `/users/:userId` | user  | —                            | `Delete user by Id route: {userId}` (placeholder response; does not persist)  |
 
-Note: `GET`/`POST`/`PUT`/`DELETE` render or reference data from the JSONPlaceholder demo API, while `PATCH` is the one route currently wired to the local `src/data/users.json` store.
+Note: `GET` and `PATCH` are wired to the local `src/data/users.json` store; `POST`, `PUT`, and `DELETE` are still placeholder text responses that ignore the body and don't touch it. The Pug views were originally written for the JSONPlaceholder user shape (`name`, `email`, numeric `id`) — local records only have `id` (UUID), `username`, `passwordHash`, and `role`, so `user.name` renders empty for `GET /users` and `GET /users/:userId`.
 
 ### Articles
 
@@ -166,10 +166,10 @@ All article routes require a valid `accessToken` **and** the `admin` role.
 | 401    | Missing/invalid/expired `accessToken` cookie                         | `Authentication required` / `Invalid or expired token`      |
 | 401    | Login with unknown username or wrong password                        | `Invalid username or password`                              |
 | 403    | Authenticated account lacks the `admin` role on a protected route    | `Access denied`                                             |
-| 404    | `:userId` / `:articleId` doesn't exist                               | `User not found` / `Article not found`                      |
+| 404    | `:userId` (PATCH) / `:articleId` doesn't exist                       | `User {userId} not found` / `Article not found`             |
 | 404    | Unmatched route after preceding middleware passes                    | `Route {method} {url} not found`                            |
 | 409    | Registering a username that already exists                           | `Username already exists`                                   |
-| 502    | The JSONPlaceholder API call fails for a reason other than not-found | `Failed to fetch articles` / `Failed to fetch users` / etc. |
+| 502    | The JSONPlaceholder articles API call fails for a reason other than not-found | `Failed to fetch articles` / `Failed to fetch article by id` |
 | 500    | Unexpected server error                                              | `Internal server error`                                     |
 
 ## Testing with curl
