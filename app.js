@@ -1,4 +1,5 @@
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import ejs from 'ejs';
 import express from 'express';
 import session from 'express-session';
@@ -27,6 +28,7 @@ app.engine('ejs', ejs.__express);
 app.engine('pug', pug.__express);
 
 app.use(logRequest);
+app.use(helmet());
 app.use(express.static(path.join(import.meta.dirname, './public')));
 app.use(resTextFormat);
 app.use(express.json());
