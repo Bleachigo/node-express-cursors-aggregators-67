@@ -1,17 +1,14 @@
 import express from 'express';
 import { articleController } from '../controllers/articles.controller.js';
-import { authenticate } from '../middleware/auth.middleware.js';
-import { authorize } from '../middleware/authorization.middleware.js';
+import { authenticate, authorize } from '../middleware/index.js';
 
-const router = express.Router();
+export const articleRouter = express.Router();
 
-router.use(authenticate);
-router.use(authorize);
+articleRouter.use(authenticate);
+articleRouter.use(authorize);
 
-router.get('/', articleController.getArticles);
-router.post('/', articleController.postArticles);
-router.get('/:articleId', articleController.getArticleById);
-router.put('/:articleId', articleController.putArticleById);
-router.delete('/:articleId', articleController.deleteArticleById);
-
-export default router;
+articleRouter.get('/', articleController.getArticles);
+articleRouter.post('/', articleController.postArticles);
+articleRouter.get('/:articleId', articleController.getArticleById);
+articleRouter.put('/:articleId', articleController.putArticleById);
+articleRouter.delete('/:articleId', articleController.deleteArticleById);

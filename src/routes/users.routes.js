@@ -1,28 +1,28 @@
 import express from 'express';
 import { userController } from '../controllers/users.controller.js';
-import { authenticate } from '../middleware/auth.middleware.js';
-import { validateUserInput } from '../middleware/validate.middleware.js';
-import { authorize } from '../middleware/authorization.middleware.js';
+import {
+  authenticate,
+  validateUserInput,
+  authorize,
+} from '../middleware/index.js';
 
-const router = express.Router();
+export const usersRouter = express.Router();
 
-router.use(authenticate);
+usersRouter.use(authenticate);
 
-router.get('/', userController.getUsers);
-router.post('/', validateUserInput, userController.postUsers);
-router.get('/:userId', userController.getUserById);
-router.put(
+usersRouter.get('/', userController.getUsers);
+usersRouter.post('/', validateUserInput, userController.postUsers);
+usersRouter.get('/:userId', userController.getUserById);
+usersRouter.put(
   '/:userId',
   authorize,
   validateUserInput,
   userController.putUserById,
 );
-router.patch(
+usersRouter.patch(
   '/:userId',
   authorize,
   validateUserInput,
   userController.patchUserById,
 );
-router.delete('/:userId', userController.deleteUserById);
-
-export default router;
+usersRouter.delete('/:userId', userController.deleteUserById);
