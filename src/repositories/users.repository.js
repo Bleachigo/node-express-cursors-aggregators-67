@@ -29,6 +29,12 @@ export const usersRepository = {
     return users.find((user) => user.username === username);
   },
 
+  async findByEmail(email) {
+    const users = await readUsers();
+
+    return users.find((user) => user.email === email);
+  },
+
   async create(user) {
     const users = await readUsers();
 
