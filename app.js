@@ -1,19 +1,21 @@
-import express from 'express';
-import ejs from 'ejs';
-import pug from 'pug';
 import cookieParser from 'cookie-parser';
-import rootRoutes from './src/routes/root.routes.js';
-import userRoutes from './src/routes/users.routes.js';
-import articleRoutes from './src/routes/articles.routes.js';
-import themeRoutes from './src/routes/theme.routes.js';
-import { authRouter } from './src/routes/auth.routes.js';
-import { logRequest } from './src/middleware/logger.middleware.js';
-import { notFound } from './src/middleware/not-found.middleware.js';
-import { errorHandler } from './src/middleware/error.middleware.js';
-import { resTextFormat } from './src/middleware/res-text-format.middleware.js';
-import { themeMiddleware } from './src/middleware/theme.middleware.js';
+import ejs from 'ejs';
+import express from 'express';
 import session from 'express-session';
 import path from 'node:path';
+import pug from 'pug';
+import {
+  errorHandler,
+  logRequest,
+  notFound,
+  resTextFormat,
+  themeMiddleware,
+} from './src/middleware/index.js';
+import articleRoutes from './src/routes/articles.routes.js';
+import { authRouter } from './src/routes/auth.routes.js';
+import rootRoutes from './src/routes/root.routes.js';
+import themeRoutes from './src/routes/theme.routes.js';
+import userRoutes from './src/routes/users.routes.js';
 
 export const app = express();
 
