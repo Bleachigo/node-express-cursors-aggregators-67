@@ -11,11 +11,13 @@ import {
   resTextFormat,
   themeMiddleware,
 } from './src/middleware/index.js';
-import articleRoutes from './src/routes/articles.routes.js';
-import { authRouter } from './src/routes/auth.routes.js';
-import rootRoutes from './src/routes/root.routes.js';
-import themeRoutes from './src/routes/theme.routes.js';
-import userRoutes from './src/routes/users.routes.js';
+import {
+  articleRouter,
+  authRouter,
+  rootRouter,
+  themeRouter,
+  usersRouter,
+} from './src/routes/index.js';
 
 export const app = express();
 
@@ -44,10 +46,10 @@ app.use(
 );
 app.use(themeMiddleware);
 app.use('/auth', authRouter);
-app.use('/theme', themeRoutes);
-app.use('/', rootRoutes);
-app.use('/users', userRoutes);
-app.use('/articles', articleRoutes);
+app.use('/theme', themeRouter);
+app.use('/', rootRouter);
+app.use('/users', usersRouter);
+app.use('/articles', articleRouter);
 
 app.use(notFound);
 app.use(errorHandler);
