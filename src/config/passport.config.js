@@ -1,6 +1,5 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
-import { verifyPassword } from '../utils/password.js';
 import { verifyCredentials } from '../services/auth.service.js';
 
 passport.use(
