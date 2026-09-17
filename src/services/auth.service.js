@@ -57,3 +57,15 @@ export const authService = {
     };
   },
 };
+
+export const verifyCredentials = async (email, password) => {
+  const user = await usersRepository.findByEmail(email);
+
+  if (!user) return null;
+
+  const passwordMatches = await verifyPassword(password, user.password);
+
+  if (!passwordMatches) return null;
+
+  return user;
+};

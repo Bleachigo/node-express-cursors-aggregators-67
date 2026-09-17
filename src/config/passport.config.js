@@ -1,7 +1,7 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
-import { usersRepository } from '../repositories/users.repository.js';
-import { verifyPassword } from '../utils/password';
+import { verifyPassword } from '../utils/password.js';
+import { verifyCredentials } from '../services/auth.service.js';
 
 passport.use(
   new LocalStrategy({
@@ -11,17 +11,9 @@ passport.use(
 
   async (email, password, done) => {
     try {
-      const user = await usersRepository.findByEmail(email);
+      const user = await verifyCredentials(email, password);
 
       if (!user) {
-        return done(null, false, {
-          message: 'Invalid email or password',
-        });
-      }
-
-      const passwordMatches = verifyPassword(password, user.password);
-
-      if (!passwordMatches) {
         return done(null, false, {
           message: 'Invalid email or password',
         });
