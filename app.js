@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import ejs from 'ejs';
 import express from 'express';
 import session from 'express-session';
+import passport from './src/config/passport.config.js';
 import path from 'node:path';
 import pug from 'pug';
 import {
@@ -46,6 +47,8 @@ app.use(
     },
   }),
 );
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(themeMiddleware);
 app.use('/auth', authRouter);
 app.use('/theme', themeRouter);
