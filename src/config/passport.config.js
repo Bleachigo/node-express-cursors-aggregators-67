@@ -1,6 +1,7 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { verifyCredentials } from '../services/auth.service.js';
+import { usersRepository } from '../repositories/users.repository.js';
 
 passport.use(
   new LocalStrategy({
@@ -24,3 +25,19 @@ passport.use(
     }
   },
 );
+
+passport.serializeUser((user, done) => done(null, user.id));
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await usersRepository.findById(id);
+
+    if (!user) return done(null, false);
+
+    return done(null, user);
+  } catch (error) {
+    return done(error);
+  }
+});
+
+export default passport;
