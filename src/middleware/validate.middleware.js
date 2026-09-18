@@ -1,16 +1,16 @@
 import { AppError } from '../utils/AppError.js';
 
 export const validateUserInput = (req, res, next) => {
-  const { username, password } = req.body ?? {};
+  const { email, password } = req.body ?? {};
 
   if (
-    typeof username !== 'string' ||
-    username.trim() === '' ||
+    typeof email !== 'string' ||
+    email.trim() === '' ||
     typeof password !== 'string' ||
     password.trim() === ''
   ) {
     return next(
-      new AppError('Username and password must be non-empty strings', 400),
+      new AppError('Email and password must be non-empty strings', 400),
     );
   }
 
