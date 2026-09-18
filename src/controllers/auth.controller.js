@@ -3,15 +3,9 @@ import { authService } from '../services/auth.service.js';
 export const authController = {
   async registerUser(req, res, next) {
     try {
-      const { username, password } = req.body;
+      const { email, password } = req.body;
 
-      const { user, token } = await authService.register(username, password);
-
-      res.cookie('accessToken', token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 1000,
-      });
+      const { user } = await authService.register(email, password);
 
       res.status(201).json({ user });
     } catch (error) {
@@ -19,35 +13,27 @@ export const authController = {
     }
   },
 
-  async loginUser(req, res, next) {
-    try {
-      const { username, password } = req.body;
-
-      const { user, token } = await authService.login(username, password);
-
-      res.cookie('accessToken', token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 1000,
-      });
-
-      res.status(200).json({ user });
-    } catch (error) {
-      next(error);
-    }
+  loginUser(req, res) {
+    res.status(200).json({
+      message: 'Login successful',
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+      },
+    });
   },
 
   async me(req, res, next) {
     res.json({ user: req.user });
   },
 
-  async logout(req, res, next) {
-    try {
-      res.clearCookie('accessToken');
+  logout(req, res, next) {
+    req.logout((error) => {
+      if (error) return next(error);
+    });
 
-      res.status(204).end();
-    } catch (error) {
-      next(error);
-    }
+    res.status(200).json({
+      message: 'Lougout successful',
+    });
   },
 };
