@@ -36,3 +36,11 @@ export const authenticate = async (req, res, next) => {
     next(error);
   }
 };
+
+export const requireAuth = (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  next();
+};
