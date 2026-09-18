@@ -24,7 +24,7 @@ export const authController = {
   },
 
   async me(req, res, next) {
-    res.json({ user: req.user });
+    res.json({ user: req.user.id });
   },
 
   logout(req, res, next) {
