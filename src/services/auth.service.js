@@ -10,8 +10,8 @@ const toPublicUser = (user) => ({
 });
 
 export const authService = {
-  async register(username, password) {
-    const existingUser = await usersRepository.findByUsername(username);
+  async register(email, password) {
+    const existingUser = await usersRepository.findByEmail(email);
 
     if (existingUser) {
       throw new AppError('Username already exists', 409);
@@ -21,18 +21,16 @@ export const authService = {
 
     const user = {
       id: crypto.randomUUID(),
-      username,
+      email,
       passwordHash,
       role: 'user',
     };
 
     await usersRepository.create(user);
 
-    const token = createToken(user.id);
-
     return {
       user: toPublicUser(user),
-      token,
+      role: user.role,
     };
   },
 
@@ -63,7 +61,7 @@ export const verifyCredentials = async (email, password) => {
 
   if (!user) return null;
 
-  const passwordMatches = await verifyPassword(password, user.password);
+  const passwordMatches = await verifyPassword(password, user.passwordHash);
 
   if (!passwordMatches) return null;
 
