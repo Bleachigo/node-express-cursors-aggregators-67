@@ -2,6 +2,7 @@ import express from 'express';
 import { authController } from '../controllers/auth.controller.js';
 import { authenticate, validateUserInput } from '../middleware/index.js';
 import passport from 'passport';
+import { requireAuth } from '../middleware/auth.middleware.js';
 
 export const authRouter = express.Router();
 
@@ -13,4 +14,4 @@ authRouter.post(
   authController.loginUser,
 );
 authRouter.post('/logout', authController.logout);
-authRouter.get('/me', authenticate, authController.me);
+authRouter.get('/me', requireAuth, authController.me);
