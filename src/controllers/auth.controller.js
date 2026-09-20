@@ -23,7 +23,7 @@ export const authController = {
     });
   },
 
-  async me(req, res, next) {
+  async me(req, res) {
     res.json({ user: req.user.id });
   },
 
