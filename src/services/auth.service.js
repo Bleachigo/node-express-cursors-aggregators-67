@@ -32,27 +32,6 @@ export const authService = {
       user: toPublicUser(user),
     };
   },
-
-  async login(username, password) {
-    const user = await usersRepository.findByUsername(username);
-
-    if (!user) {
-      throw new AppError('Invalid username or password', 401);
-    }
-
-    const isPasswordValid = await verifyPassword(password, user.passwordHash);
-
-    if (!isPasswordValid) {
-      throw new AppError('Invalid username or password', 401);
-    }
-
-    const token = createToken(user.id);
-
-    return {
-      user: toPublicUser(user),
-      token,
-    };
-  },
 };
 
 export const verifyCredentials = async (email, password) => {
