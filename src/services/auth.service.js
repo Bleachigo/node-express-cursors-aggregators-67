@@ -5,7 +5,7 @@ import { hashPassword, verifyPassword } from '../utils/password.js';
 
 const toPublicUser = (user) => ({
   id: user.id,
-  username: user.username,
+  email: user.email,
   role: user.role,
 });
 
@@ -30,7 +30,6 @@ export const authService = {
 
     return {
       user: toPublicUser(user),
-      role: user.role,
     };
   },
 
