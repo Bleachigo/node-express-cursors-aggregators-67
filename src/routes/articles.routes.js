@@ -5,10 +5,17 @@ import { requireAuth, authorize } from '../middleware/index.js';
 export const articleRouter = express.Router();
 
 articleRouter.use(requireAuth);
-articleRouter.use(authorize);
 
 articleRouter.get('/', articleController.getArticles);
-articleRouter.post('/', articleController.postArticles);
+articleRouter.post('/', authorize('admin'), articleController.postArticles);
 articleRouter.get('/:articleId', articleController.getArticleById);
-articleRouter.put('/:articleId', articleController.putArticleById);
-articleRouter.delete('/:articleId', articleController.deleteArticleById);
+articleRouter.put(
+  '/:articleId',
+  authorize('admin'),
+  articleController.putArticleById,
+);
+articleRouter.delete(
+  '/:articleId',
+  authorize('admin'),
+  articleController.deleteArticleById,
+);
