@@ -10,7 +10,6 @@ import {
   errorHandler,
   logRequest,
   notFound,
-  resTextFormat,
   themeMiddleware,
 } from './src/middleware/index.js';
 import {
