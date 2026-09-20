@@ -14,7 +14,7 @@ export const authService = {
     const existingUser = await usersRepository.findByEmail(email);
 
     if (existingUser) {
-      throw new AppError('Username already exists', 409);
+      throw new AppError('User already exists', 409);
     }
 
     const passwordHash = await hashPassword(password);
