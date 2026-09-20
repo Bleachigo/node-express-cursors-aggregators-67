@@ -15,13 +15,13 @@ usersRouter.post('/', validateUserInput, userController.postUsers);
 usersRouter.get('/:userId', userController.getUserById);
 usersRouter.put(
   '/:userId',
-  authorize,
+  authorize('admin'),
   validateUserInput,
   userController.putUserById,
 );
 usersRouter.patch(
   '/:userId',
-  authorize,
+  authorize('admin'),
   validateUserInput,
   userController.patchUserById,
 );
