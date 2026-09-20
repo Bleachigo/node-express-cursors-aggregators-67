@@ -30,10 +30,10 @@ export const authController = {
   logout(req, res, next) {
     req.logout((error) => {
       if (error) return next(error);
-    });
 
-    res.status(200).json({
-      message: 'Lougout successful',
+      res.status(200).json({
+        message: 'Logout successful',
+      });
     });
   },
 };
