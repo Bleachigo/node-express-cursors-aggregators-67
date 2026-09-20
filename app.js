@@ -31,7 +31,6 @@ app.engine('pug', pug.__express);
 app.use(logRequest);
 app.use(helmet());
 app.use(express.static(path.join(import.meta.dirname, './public')));
-app.use(resTextFormat);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
