@@ -1,6 +1,5 @@
 import { usersRepository } from '../repositories/users.repository.js';
 import { AppError } from '../utils/AppError.js';
-import { createToken } from '../utils/jwt.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 
 const toPublicUser = (user) => ({
