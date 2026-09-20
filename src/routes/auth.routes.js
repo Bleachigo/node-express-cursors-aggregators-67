@@ -30,5 +30,5 @@ authRouter.post(
   },
   authController.loginUser,
 );
-authRouter.post('/logout', authController.logout);
+authRouter.post('/logout', requireAuth, authController.logout);
 authRouter.get('/me', requireAuth, authController.me);
