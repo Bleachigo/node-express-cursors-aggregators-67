@@ -1,10 +1,10 @@
 import express from 'express';
 import { articleController } from '../controllers/articles.controller.js';
-import { authenticate, authorize } from '../middleware/index.js';
+import { requireAuth, authorize } from '../middleware/index.js';
 
 export const articleRouter = express.Router();
 
-articleRouter.use(authenticate);
+articleRouter.use(requireAuth);
 articleRouter.use(authorize);
 
 articleRouter.get('/', articleController.getArticles);

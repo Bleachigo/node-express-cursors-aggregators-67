@@ -1,14 +1,14 @@
 import express from 'express';
 import { userController } from '../controllers/users.controller.js';
 import {
-  authenticate,
+  requireAuth,
   validateUserInput,
   authorize,
 } from '../middleware/index.js';
 
 export const usersRouter = express.Router();
 
-usersRouter.use(authenticate);
+usersRouter.use(requireAuth);
 
 usersRouter.get('/', userController.getUsers);
 usersRouter.post('/', validateUserInput, userController.postUsers);
