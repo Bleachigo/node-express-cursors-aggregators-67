@@ -1,4 +1,4 @@
-export { authenticate, requireAuth } from './auth.middleware.js';
+export { requireAuth } from './auth.middleware.js';
 export { authorize } from './authorization.middleware.js';
 export { errorHandler } from './error.middleware.js';
 export { logRequest } from './logger.middleware.js';

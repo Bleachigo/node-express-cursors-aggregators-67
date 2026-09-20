@@ -1,6 +1,6 @@
 import express from 'express';
 import { authController } from '../controllers/auth.controller.js';
-import { authenticate, validateUserInput } from '../middleware/index.js';
+import { validateUserInput } from '../middleware/index.js';
 import passport from 'passport';
 import { requireAuth } from '../middleware/auth.middleware.js';
 import { AppError } from '../utils/AppError.js';
