@@ -37,8 +37,13 @@ export const authController = {
     req.logout((error) => {
       if (error) return next(error);
 
-      res.status(200).json({
-        message: 'Logout successful',
+      req.session.destroy((destroyErr) => {
+        if (destroyErr) return next(destroyErr);
+
+        res.clearCookie('connect.sid');
+        res.status(200).json({
+          message: 'Logout successful',
+        });
       });
     });
   },
