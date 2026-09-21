@@ -40,7 +40,7 @@ export const authController = {
       req.session.destroy((destroyErr) => {
         if (destroyErr) return next(destroyErr);
 
-        res.clearCookie('connect.sid');
+        res.clearCookie('sid');
         res.status(200).json({
           message: 'Logout successful',
         });
