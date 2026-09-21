@@ -1,14 +1,2 @@
-[
-  {
-    "id": "78b0cb68-f058-493e-aeda-3ea3065e9da7",
-    "email": "art@fafa.com",
-    "passwordHash": "$2b$12$PPlG3lwGmeDjM1IBTYkvaOgjiaXzD9epW3LaQLBSpAhB6In3Hq16.",
-    "role": "user"
-  },
-  {
-    "id": "593c12f5-27a6-4932-b2f7-c66abc2b4438",
-    "email": "fart@fafa.com",
-    "passwordHash": "$2b$12$AVn2z3o3CfwEggLAnutooeS6UcBDEXKswIZusFBFGW6oYpDlu1Cty",
-    "role": "user"
-  }
-]
+[]
+
