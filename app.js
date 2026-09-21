@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import ejs from 'ejs';
 import express from 'express';
 import session from 'express-session';
+import FileStoreFactory from 'session-file-store';
 import passport from './src/config/passport.config.js';
 import path from 'node:path';
 import pug from 'pug';
@@ -22,6 +23,12 @@ import {
 
 export const app = express();
 
+const FileStore = FileStoreFactory(session);
+const isProd = process.env.NODE_ENV === 'production';
+const MAX_AGE = 60 * 60 * 1000;
+
+if (isProd) app.set('trust proxy', 1);
+
 app.set('views', './src/views');
 
 app.engine('ejs', ejs.__express);
@@ -35,14 +42,22 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(
   session({
+    store: new FileStore({
+      path: './src/data/sessions',
+      ttl: MAX_AGE / 1000,
+      reapInterval: 60 * 60,
+      retries: 0,
+    }),
+    name: 'sid',
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    rolling: true,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProd,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 1000,
+      maxAge: MAX_AGE,
     },
   }),
 );
