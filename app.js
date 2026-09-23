@@ -1,4 +1,5 @@
 import cookieParser from 'cookie-parser';
+import 'dotenv/config';
 import helmet from 'helmet';
 import ejs from 'ejs';
 import express from 'express';
