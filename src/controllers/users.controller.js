@@ -9,7 +9,6 @@ export const userController = {
     try {
       const users = await userService.getAllUsers();
 
-      res.type('html');
       res.render('../views/users/index.pug', { users });
     } catch (error) {
       next(error);
@@ -22,12 +21,13 @@ export const userController = {
 
       const user = await userService.findUserById(userId);
 
-      res.type('html');
       res.render('../views/users/details.pug', { user });
     } catch (error) {
       next(error);
     }
   },
+
+  // async getUserByEmail(req, res, next) {},
 
   putUserById(req, res) {
     res.send(`Put user by Id route: ${req.params.userId}`);
