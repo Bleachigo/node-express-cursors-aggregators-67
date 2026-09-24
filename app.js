@@ -4,7 +4,8 @@ import helmet from 'helmet';
 import ejs from 'ejs';
 import express from 'express';
 import session from 'express-session';
-import FileStoreFactory from 'session-file-store';
+import MongoStore from 'connect-mongo';
+import { client } from './src/config/mongodb.config.js';
 import passport from './src/config/passport.config.js';
 import path from 'node:path';
 import pug from 'pug';
@@ -24,7 +25,6 @@ import {
 
 export const app = express();
 
-const FileStore = FileStoreFactory(session);
 const isProd = process.env.NODE_ENV === 'production';
 const MAX_AGE = 60 * 60 * 1000;
 
@@ -43,17 +43,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(
   session({
-    store: new FileStore({
-      path: './src/data/sessions',
+    store: MongoStore.create({
+      client,
+      dbName: process.env.MONGODB_DB_NAME,
+      collectionName: 'sessions',
       ttl: MAX_AGE / 1000,
-      reapInterval: 60 * 60,
-      retries: 0,
+      autoRemove: 'native',
+      touchAfter: 10 * 60,
     }),
     name: 'sid',
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    rolling: true,
     cookie: {
       httpOnly: true,
       secure: isProd,
