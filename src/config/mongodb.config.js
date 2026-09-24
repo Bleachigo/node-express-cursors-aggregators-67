@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb';
 import 'dotenv/config';
 
-const client = new MongoClient(process.env.MONGODB_URI);
+export const client = new MongoClient(process.env.MONGODB_URI);
 
 let db;
 
