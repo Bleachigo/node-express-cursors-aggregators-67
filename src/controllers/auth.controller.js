@@ -4,7 +4,6 @@ export const authController = {
   async registerUser(req, res, next) {
     try {
       const { email, password } = req.body;
-
       const { user } = await authService.register(email, password);
 
       res.status(201).json({ user });
