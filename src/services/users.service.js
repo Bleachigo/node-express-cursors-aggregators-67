@@ -22,7 +22,13 @@ export const userService = {
   },
 
   async getAllUsers() {
-    return usersRepository.findAll();
+    const users = await usersRepository.findAll();
+
+    if (!users) {
+      throw new AppError('No users found', 404);
+    }
+
+    return users;
   },
 
   async findUserById(userId) {
