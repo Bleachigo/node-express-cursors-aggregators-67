@@ -14,5 +14,9 @@ export const validateUserInput = (req, res, next) => {
     );
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
+
+  req.body.email = normalizedEmail;
+
   next();
 };
