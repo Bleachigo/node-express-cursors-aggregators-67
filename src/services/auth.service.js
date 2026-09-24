@@ -19,13 +19,12 @@ export const authService = {
     const passwordHash = await hashPassword(password);
 
     const user = {
-      id: crypto.randomUUID(),
       email,
       passwordHash,
       role: 'user',
     };
 
-    await usersRepository.create(user);
+    await usersRepository.createOne(user);
 
     return {
       user: toPublicUser(user),
