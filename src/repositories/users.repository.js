@@ -1,48 +1,26 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { mongoRepository } from './mongodb.repository.js';
 
-const usersFile = new URL('../data/users.json', import.meta.url);
-
-const readUsers = async () => {
-  const data = await readFile(usersFile, 'utf8');
-
-  return JSON.parse(data);
-};
-
-const writeUsers = async (users) => {
-  await writeFile(usersFile, JSON.stringify(users, null, 2));
-};
+const COLLECTION = 'users';
 
 export const usersRepository = {
   async findAll() {
-    return readUsers();
+    return mongoRepository.findDocuments(COLLECTION);
   },
 
-  async findById(id) {
-    const users = await readUsers();
-
-    return users.find((user) => user.id === id);
+  async findById(_id) {
+    return mongoRepository.findDocument(COLLECTION, _id);
   },
 
   async findByUsername(username) {
-    const users = await readUsers();
-
-    return users.find((user) => user.username === username);
+    return mongoRepository.findDocument(COLLECTION, username);
   },
 
   async findByEmail(email) {
-    const users = await readUsers();
-
-    return users.find((user) => user.email === email);
+    return mongoRepository.findDocument(COLLECTION, { email });
   },
 
-  async create(user) {
-    const users = await readUsers();
-
-    users.push(user);
-
-    await writeUsers(users);
-
-    return user;
+  async createOne(user) {
+    return mongoRepository.insertDocument(COLLECTION, user);
   },
 
   async update(id, updates) {
