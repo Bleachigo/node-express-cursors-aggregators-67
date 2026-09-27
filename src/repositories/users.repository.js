@@ -1,42 +1,49 @@
+import { ObjectId } from 'mongodb';
 import { mongoRepository } from './mongodb.repository.js';
 
 const COLLECTION = 'users';
 
+const toObjectId = (id) => (ObjectId.isValid(id) ? new ObjectId(id) : null);
+
+const toUser = (doc) => {
+  if (!doc) return null;
+
+  const { _id, ...rest } = doc;
+
+  return { id: _id.toString(), ...rest };
+};
+
 export const usersRepository = {
   async findAll() {
-    return mongoRepository.findDocuments(COLLECTION);
+    const docs = await mongoRepository.findDocuments(COLLECTION);
+
+    return docs.map(toUser);
   },
 
-  async findById(_id) {
-    return mongoRepository.findDocument(COLLECTION, _id);
-  },
+  async findById(id) {
+    const _id = toObjectId(id);
 
-  async findByUsername(username) {
-    return mongoRepository.findDocument(COLLECTION, username);
+    if (!_id) return null;
+
+    return toUser(await mongoRepository.findDocument(COLLECTION, { _id }));
   },
 
   async findByEmail(email) {
-    return mongoRepository.findDocument(COLLECTION, { email });
+    return toUser(await mongoRepository.findDocument(COLLECTION, { email }));
   },
 
   async createOne(user) {
-    return mongoRepository.insertDocument(COLLECTION, user);
+    return toUser(await mongoRepository.insertDocument(COLLECTION, user));
   },
 
-  async update(id, updates) {
-    const users = await readUsers();
-    const index = users.findIndex((user) => user.id === id);
+  async update(id, changes) {
+    const _id = toObjectId(id);
 
-    if (index === -1) return undefined;
+    if (!_id) return null;
 
-    users[index] = {
-      ...users[index],
-      ...updates,
-    };
-
-    await writeUsers(users);
-
-    return users[index];
+    return toUser(
+      await mongoRepository.updateDocument(COLLECTION, { _id }, changes),
+    );
   },
 
   async replace(id, updates) {
