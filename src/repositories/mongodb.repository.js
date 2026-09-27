@@ -17,9 +17,17 @@ export const mongoRepository = {
     return collection.findOne(filter);
   },
 
-  async findDocuments(collectionName) {
+  async findDocuments(collectionName, filter = {}) {
     const collection = getCollection(collectionName);
 
-    return collection.find();
+    return collection.find(filter).toArray();
+  },
+
+  async updateDocument(collectionName, filter, changes) {
+    return getCollection(collectionName).findOneAndUpdate(
+      filter,
+      { $set: changes },
+      { returnDocument: 'after' },
+    );
   },
 };
