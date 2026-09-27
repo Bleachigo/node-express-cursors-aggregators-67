@@ -9,9 +9,10 @@ html(lang="en")
   body(class=theme) 
     h1 Users
 
-    each user in users
-      div
-        h2= user.name
-        p= user.id
-        p= user.username
-        p= user.email
+    if users.length
+      each user in users
+        div(class="user-card")
+          h2= user.email
+          p= user.id
+    else
+      p No users yet
