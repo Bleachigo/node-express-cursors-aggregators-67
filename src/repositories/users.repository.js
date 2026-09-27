@@ -10,7 +10,7 @@ const toUser = (doc) => {
 
   const { _id, ...rest } = doc;
 
-  return { id: _id.toString(), ...rest };
+  return { ...rest, id: _id.toString() };
 };
 
 export const usersRepository = {
