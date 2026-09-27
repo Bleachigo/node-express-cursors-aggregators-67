@@ -2,33 +2,8 @@ import { AppError } from '../utils/AppError.js';
 import { usersRepository } from '../repositories/users.repository.js';
 
 export const userService = {
-  async createUser(userData) {
-    const existingUser = await usersRepository.findByUsername(
-      userData.username,
-    );
-
-    if (existingUser) {
-      throw new AppError('Username already exist', 409);
-    }
-
-    const user = {
-      id: crypto.randomUUID(),
-      username: userData.username,
-      password: userData.password,
-      role: 'user',
-    };
-
-    return usersRepository.create(user);
-  },
-
   async getAllUsers() {
-    const users = await usersRepository.findAll();
-
-    if (!users) {
-      throw new AppError('No users found', 404);
-    }
-
-    return users;
+    return await usersRepository.findAll();
   },
 
   async findUserById(userId) {
