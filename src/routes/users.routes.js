@@ -13,16 +13,6 @@ usersRouter.use(requireAuth);
 usersRouter.get('/', userController.getUsers);
 usersRouter.post('/', validateUserInput, userController.postUsers);
 usersRouter.get('/:userId', userController.getUserById);
-usersRouter.put(
-  '/:userId',
-  authorize('admin'),
-  validateUserInput,
-  userController.putUserById,
-);
-usersRouter.patch(
-  '/:userId',
-  authorize('admin'),
-  validateUserInput,
-  userController.patchUserById,
-);
+usersRouter.put('/:userId', authorize('admin'), userController.putUserById);
+usersRouter.patch('/:userId', authorize('admin'), userController.patchUserById);
 usersRouter.delete('/:userId', userController.deleteUserById);
