@@ -2,11 +2,7 @@ import { usersRepository } from '../repositories/users.repository.js';
 import { AppError } from '../utils/AppError.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 
-const toPublicUser = (user) => ({
-  id: user.id,
-  email: user.email,
-  role: user.role,
-});
+const toPublicUser = ({ id, email, role }) => ({ id, email, role });
 
 export const authService = {
   async register(email, password) {
@@ -18,17 +14,13 @@ export const authService = {
 
     const passwordHash = await hashPassword(password);
 
-    const user = {
+    const created = await usersRepository.createOne({
       email,
       passwordHash,
       role: 'user',
-    };
+    });
 
-    await usersRepository.createOne(user);
-
-    return {
-      user: toPublicUser(user),
-    };
+    return { user: toPublicUser(created) };
   },
 };
 
@@ -41,5 +33,5 @@ export const verifyCredentials = async (email, password) => {
 
   if (!passwordMatches) return null;
 
-  return user;
+  return toPublicUser(user);
 };
