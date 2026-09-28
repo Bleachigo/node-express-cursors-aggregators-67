@@ -21,6 +21,7 @@ import {
   rootRouter,
   themeRouter,
   usersRouter,
+  balloonsRouter,
 } from './src/routes/index.js';
 
 export const app = express();
@@ -71,6 +72,7 @@ app.use('/theme', themeRouter);
 app.use('/', rootRouter);
 app.use('/users', usersRouter);
 app.use('/articles', articleRouter);
+app.use('/balloons', balloonsRouter);
 
 app.use(notFound);
 app.use(errorHandler);

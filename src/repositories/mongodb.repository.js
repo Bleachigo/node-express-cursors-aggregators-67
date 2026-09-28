@@ -11,6 +11,16 @@ export const mongoRepository = {
     };
   },
 
+  async insertDocuments(collectionName, documents) {
+    const collection = getCollection(collectionName);
+    const result = await collection.insertMany(documents);
+
+    return documents.map((doc, index) => ({
+      ...doc,
+      _id: result.insertedIds[index],
+    }));
+  },
+
   async findDocument(collectionName, filter, options = {}) {
     return getCollection(collectionName).findOne(filter, options);
   },
