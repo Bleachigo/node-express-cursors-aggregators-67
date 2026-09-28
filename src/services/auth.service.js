@@ -2,8 +2,6 @@ import { usersRepository } from '../repositories/users.repository.js';
 import { AppError } from '../utils/AppError.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 
-const toPublicUser = ({ id, email, role }) => ({ id, email, role });
-
 export const authService = {
   async register(email, password) {
     const existingUser = await usersRepository.findByEmail(email);
@@ -20,18 +18,18 @@ export const authService = {
       role: 'user',
     });
 
-    return { user: toPublicUser(created) };
+    return { user: created };
   },
 };
 
 export const verifyCredentials = async (email, password) => {
-  const user = await usersRepository.findByEmail(email);
+  const user = await usersRepository.findCredentialsByEmail(email);
 
-  if (!user) return null;
+  if (!user?.passwordHash) return null;
 
-  const passwordMatches = await verifyPassword(password, user.passwordHash);
+  if (!(await verifyPassword(password, user.passwordHash))) return null;
 
-  if (!passwordMatches) return null;
+  const { passwordHash, ...publicUser } = user;
 
-  return toPublicUser(user);
+  return publicUser;
 };
