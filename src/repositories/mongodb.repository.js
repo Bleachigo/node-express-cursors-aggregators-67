@@ -11,7 +11,7 @@ export const mongoRepository = {
     };
   },
 
-  async findDocument(collectionName, filter = {}, options = {}) {
+  async findDocument(collectionName, filter, options = {}) {
     return getCollection(collectionName).findOne(filter, options);
   },
 
