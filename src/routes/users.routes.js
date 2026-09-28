@@ -15,4 +15,8 @@ usersRouter.post('/', validateUserInput, userController.postUsers);
 usersRouter.get('/:userId', userController.getUserById);
 usersRouter.put('/:userId', authorize('admin'), userController.putUserById);
 usersRouter.patch('/:userId', authorize('admin'), userController.patchUserById);
-usersRouter.delete('/:userId', userController.deleteUserById);
+usersRouter.delete(
+  '/:userId',
+  authorize('admin'),
+  userController.deleteUserById,
+);
