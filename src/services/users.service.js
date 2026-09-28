@@ -40,7 +40,7 @@ export const userService = {
     const deletedUser = await usersRepository.delete(userId);
 
     if (!deletedUser) {
-      throw new AppError(`User ${userId} not exitsts`, 404);
+      throw new AppError(`User ${userId} not exitst`, 404);
     }
 
     return deletedUser;
