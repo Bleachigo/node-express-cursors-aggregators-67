@@ -11,23 +11,23 @@ export const mongoRepository = {
     };
   },
 
-  async findDocument(collectionName, filter) {
-    const collection = getCollection(collectionName);
-
-    return collection.findOne(filter);
+  async findDocument(collectionName, filter = {}, options = {}) {
+    return getCollection(collectionName).findOne(filter, options);
   },
 
-  async findDocuments(collectionName, filter = {}) {
-    const collection = getCollection(collectionName);
-
-    return collection.find(filter).toArray();
+  async findDocuments(collectionName, filter = {}, options = {}) {
+    return getCollection(collectionName).find(filter, options).toArray();
   },
 
-  async updateDocument(collectionName, filter, changes) {
+  async updateDocument(collectionName, filter, changes, options = {}) {
     return getCollection(collectionName).findOneAndUpdate(
       filter,
       { $set: changes },
-      { returnDocument: 'after' },
+      { returnDocument: 'after', ...options },
     );
+  },
+
+  async deleteDocument(collectionName, filter, options = {}) {
+    return getCollection(collectionName).findOneAndDelete(filter, options);
   },
 };
