@@ -45,7 +45,15 @@ export const userController = {
     }
   },
 
-  deleteUserById(req, res) {
-    res.send(`Delete user by Id route: ${req.params.userId}`);
+  async deleteUserById(req, res) {
+    try {
+      const { userId } = req.params;
+
+      const deletedUser = await userService.deleteUser(userId);
+
+      res.json(deletedUser);
+    } catch (error) {
+      next(error);
+    }
   },
 };
