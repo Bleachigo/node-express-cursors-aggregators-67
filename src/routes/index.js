@@ -3,3 +3,4 @@ export { authRouter } from './auth.routes.js';
 export { rootRouter } from './root.routes.js';
 export { themeRouter } from './theme.routes.js';
 export { usersRouter } from './users.routes.js';
+export { balloonsRouter } from './balloons.routes.js';
