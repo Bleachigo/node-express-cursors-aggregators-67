@@ -1,5 +1,6 @@
 import { AppError } from '../utils/AppError.js';
 import { usersRepository } from '../repositories/users.repository.js';
+import { hashPassword } from '../utils/password.js';
 
 export const userService = {
   async getAllUsers() {
@@ -27,7 +28,11 @@ export const userService = {
   },
 
   async replaceUser(userId, userData) {
-    const replacedUser = await usersRepository.replace(userId, userData);
+    const replacedUser = await usersRepository.replace(userId, {
+      email: userData.email.trim().toLowerCase(),
+      passwordHash: await hashPassword(userData.password),
+      role: userData.role,
+    });
 
     if (!replacedUser) {
       throw new AppError(`User ${userId} not found`, 404);

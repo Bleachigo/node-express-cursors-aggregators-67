@@ -27,6 +27,17 @@ export const mongoRepository = {
     );
   },
 
+  async replaceDocument(collectionName, filter, replacement, options = {}) {
+    return getCollection(collectionName).findOneAndReplace(
+      filter,
+      replacement,
+      {
+        returnDocument: 'after',
+        ...options,
+      },
+    );
+  },
+
   async deleteDocument(collectionName, filter, options = {}) {
     return getCollection(collectionName).findOneAndDelete(filter, options);
   },

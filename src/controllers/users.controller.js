@@ -29,8 +29,16 @@ export const userController = {
 
   // async getUserByEmail(req, res, next) {},
 
-  putUserById(req, res) {
-    res.send(`Put user by Id route: ${req.params.userId}`);
+  async putUserById(req, res, next) {
+    try {
+      const { userId } = req.params;
+
+      const replacedUser = await userService.replaceUser(userId, req.body);
+
+      res.json(replacedUser);
+    } catch (error) {
+      next(error);
+    }
   },
 
   async patchUserById(req, res, next) {

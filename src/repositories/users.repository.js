@@ -87,20 +87,19 @@ export const usersRepository = {
     );
   },
 
-  async replace(id, updates) {
-    const users = await readUsers();
-    const index = users.findIndex((user) => user.id === id);
+  async replace(id, user, options) {
+    const _id = toObjectId(id);
 
-    if (index === -1) return undefined;
+    if (!_id) return null;
 
-    users[index] = {
-      id: id,
-      ...updates,
-    };
-
-    await writeUsers(users);
-
-    return users[index];
+    return toUser(
+      await mongoRepository.replaceDocument(
+        COLLECTION,
+        { _id },
+        user,
+        withDefaults(options),
+      ),
+    );
   },
 
   async delete(id) {
