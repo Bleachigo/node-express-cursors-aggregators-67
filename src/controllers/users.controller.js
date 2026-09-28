@@ -45,7 +45,7 @@ export const userController = {
     }
   },
 
-  async deleteUserById(req, res) {
+  async deleteUserById(req, res, next) {
     try {
       const { userId } = req.params;
 
