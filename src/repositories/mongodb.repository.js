@@ -37,6 +37,14 @@ export const mongoRepository = {
     );
   },
 
+  async updateDocuments(collectionName, filter, changes, options = {}) {
+    return getCollection(collectionName).updateMany(
+      filter,
+      { $set: changes },
+      options,
+    );
+  },
+
   async replaceDocument(collectionName, filter, replacement, options = {}) {
     return getCollection(collectionName).findOneAndReplace(
       filter,
@@ -50,5 +58,13 @@ export const mongoRepository = {
 
   async deleteDocument(collectionName, filter, options = {}) {
     return getCollection(collectionName).findOneAndDelete(filter, options);
+  },
+
+  async updateOne(collectionName, filter, changes, options = {}) {
+    return getCollection(collectionName).updateOne(
+      filter,
+      { $set: changes },
+      options,
+    );
   },
 };

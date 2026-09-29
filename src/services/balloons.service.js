@@ -30,6 +30,26 @@ const toBalloonDoc = (item, index) => {
   };
 };
 
+const toFilter = (query = {}) => {
+  const filter = {};
+
+  if (query.color !== undefined)
+    filter.color = String(query.color).trim().toLowerCase();
+
+  if (query.shape !== undefined) {
+    if (!SHAPES.includes(query.shape)) {
+      throw new AppError(`shape must be one of ${SHAPES.join(', ')}`, 400);
+    }
+    filter.shape = query.shape;
+  }
+
+  if (!Object.keys(filter).length) {
+    throw new AppError('Filter by color and/or shape is required', 400);
+  }
+
+  return filter;
+};
+
 export const balloonsService = {
   async createBalloons(items) {
     if (!Array.isArray(items) || !items.length || items.length > MAX_BATCH) {
@@ -40,5 +60,16 @@ export const balloonsService = {
     }
 
     return balloonsRepository.createMany(items.map(toBalloonDoc));
+  },
+
+  async updateOneBalloon(balloonId, updates) {
+    const { matchedCount, modifiedCount } =
+      await balloonsRepository.updateBalloon(balloonId, updates);
+
+    if (!matchedCount) {
+      throw new AppError(`${matchedCount} items were found`, 404);
+    }
+
+    return { matchedCount, modifiedCount };
   },
 };

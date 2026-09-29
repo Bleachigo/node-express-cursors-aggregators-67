@@ -12,4 +12,19 @@ export const balloonsController = {
       next(error);
     }
   },
+
+  async patchBalloonById(req, res, next) {
+    try {
+      const { balloonId } = req.params;
+
+      const updatedBalloon = await balloonsService.updateOneBalloon(
+        balloonId,
+        req.body,
+      );
+
+      res.status(200).json(updatedBalloon);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
