@@ -17,8 +17,11 @@ export const balloonsRepository = {
 
     if (!_id) return null;
 
-    return toBalloon(
-      await mongoRepository.updateOne(COLLECTION, { _id }, changes, {}),
+    return await mongoRepository.updateOne(
+      COLLECTION,
+      { _id },
+      changes,
+      options,
     );
   },
 };
