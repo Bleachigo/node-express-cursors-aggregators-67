@@ -63,12 +63,13 @@ export const balloonsService = {
   },
 
   async updateOneBalloon(balloonId, updates) {
-    const { matchedCount, modifiedCount } =
-      await balloonsRepository.updateBalloon(balloonId, updates);
+    const result = await balloonsRepository.updateBalloon(balloonId, updates);
 
-    if (!matchedCount) {
-      throw new AppError(`${matchedCount} items were found`, 404);
+    if (!result?.matchedCount) {
+      throw new AppError(`Balloon ${balloonId} not found`, 404);
     }
+
+    const { matchedCount, modifiedCount } = result;
 
     return { matchedCount, modifiedCount };
   },
