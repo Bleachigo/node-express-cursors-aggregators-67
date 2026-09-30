@@ -31,22 +31,24 @@ export const balloonsController = {
 
   async patchBalloons(req, res, next) {
     try {
-      const { color: matchColor } = req.query;
+      const { color, shape } = req.query;
 
-      if (typeof matchColor !== 'string' || !matchColor) {
+      if (typeof color !== 'string' || !color) {
         throw new AppError('Query param "color" is required', 400);
       }
 
+      if (typeof shape !== 'string' || !shape) {
+        throw new AppError('Query param "shape" is required', 400);
+      }
+      const query = { color, shape };
       const { color: changeColor } = req.body;
+      const changes = { color: changeColor };
 
       if (typeof changeColor !== 'string' || !changeColor) {
         throw new AppError('Body param "color" is required', 400);
       }
 
-      const result = await balloonsService.updateManyBalloons(
-        matchColor,
-        changeColor,
-      );
+      const result = await balloonsService.updateManyBalloons(query, changes);
 
       res.status(200).json({
         matched: result.matchedCount,

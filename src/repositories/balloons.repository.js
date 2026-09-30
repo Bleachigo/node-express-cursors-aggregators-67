@@ -24,4 +24,13 @@ export const balloonsRepository = {
       options,
     );
   },
+
+  async updateBalloons(query, changes, options) {
+    return await mongoRepository.updateDocuments(
+      COLLECTION,
+      query,
+      changes,
+      options,
+    );
+  },
 };

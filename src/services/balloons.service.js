@@ -76,7 +76,7 @@ export const balloonsService = {
   },
 
   async updateManyBalloons(query, updates) {
-    const result = await balloonsRepository.updateMany(
+    const result = await balloonsRepository.updateBalloons(
       toFilter(query),
       updates,
     );
