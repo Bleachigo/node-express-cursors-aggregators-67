@@ -33,4 +33,8 @@ export const balloonsRepository = {
       options,
     );
   },
+
+  async deleteBalloons(filter, options) {
+    return mongoRepository.deleteDocuments(COLLECTION, filter);
+  },
 };
