@@ -95,4 +95,22 @@ export const balloonsController = {
       next(error);
     }
   },
+
+  async deleteBalloonById(req, res, next) {
+    try {
+      const { balloonId } = req.params;
+
+      if (typeof balloonId !== 'string' || !balloonId) {
+        throw new AppError('Id must be non empty string', 400);
+      }
+
+      const result = await balloonsService.deleteOneBalloon(balloonId);
+
+      res.status(200).json({
+        message: `${result} balloon ${balloonId} successfully deleted`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

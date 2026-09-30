@@ -117,4 +117,14 @@ export const balloonsService = {
 
     return result.deletedCount;
   },
+
+  async deleteOneBalloon(balloonId) {
+    const result = await balloonsRepository.deleteBalloon(balloonId);
+
+    if (!result?.deletedCount) {
+      throw new AppError(`Balloon with ${balloonId} not found`, 404);
+    }
+
+    return result.deletedCount;
+  },
 };

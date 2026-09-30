@@ -57,7 +57,7 @@ export const mongoRepository = {
   },
 
   async deleteDocument(collectionName, filter, options = {}) {
-    return getCollection(collectionName).findOneAndDelete(filter, options);
+    return getCollection(collectionName).deleteOne(filter, options);
   },
 
   async deleteDocuments(collectionName, filter, options = {}) {

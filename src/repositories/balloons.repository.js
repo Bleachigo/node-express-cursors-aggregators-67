@@ -50,4 +50,12 @@ export const balloonsRepository = {
   async deleteBalloons(filter) {
     return mongoRepository.deleteDocuments(COLLECTION, filter);
   },
+
+  async deleteBalloon(id) {
+    const _id = toObjectId(id);
+
+    if (!_id) return null;
+
+    return mongoRepository.deleteDocument(COLLECTION, { _id });
+  },
 };
