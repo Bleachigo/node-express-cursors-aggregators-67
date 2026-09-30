@@ -60,6 +60,10 @@ export const mongoRepository = {
     return getCollection(collectionName).findOneAndDelete(filter, options);
   },
 
+  async deleteDocuments(collectionName, filter, options = {}) {
+    return getCollection(collectionName).deleteMany(filter, options);
+  },
+
   async updateOne(collectionName, filter, changes, options = {}) {
     return getCollection(collectionName).updateOne(
       filter,
