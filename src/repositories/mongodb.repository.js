@@ -71,4 +71,8 @@ export const mongoRepository = {
       options,
     );
   },
+
+  async replaceOne(collectionName, filter, changes, options = {}) {
+    return getCollection(collectionName).replaceOne(filter, changes, options);
+  },
 };

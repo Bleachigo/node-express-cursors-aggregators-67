@@ -25,6 +25,19 @@ export const balloonsRepository = {
     );
   },
 
+  async replaceBalloon(id, changes, options) {
+    const _id = toObjectId(id);
+
+    if (!_id) return null;
+
+    return await mongoRepository.replaceOne(
+      COLLECTION,
+      { _id },
+      changes,
+      options,
+    );
+  },
+
   async updateBalloons(query, changes, options) {
     return await mongoRepository.updateDocuments(
       COLLECTION,

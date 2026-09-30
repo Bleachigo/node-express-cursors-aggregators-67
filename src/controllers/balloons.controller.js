@@ -29,6 +29,21 @@ export const balloonsController = {
     }
   },
 
+  async putBalloonById(req, res, next) {
+    try {
+      const { balloonId } = req.params;
+
+      const replacedBalloon = await balloonsService.replaceOneBalloon(
+        balloonId,
+        req.body,
+      );
+
+      res.status(200).json(replacedBalloon);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async patchBalloons(req, res, next) {
     try {
       const { color, shape } = req.query;

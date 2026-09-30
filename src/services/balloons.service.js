@@ -75,6 +75,18 @@ export const balloonsService = {
     return { matchedCount, modifiedCount };
   },
 
+  async replaceOneBalloon(balloonId, updates) {
+    const result = await balloonsRepository.replaceBalloon(balloonId, updates);
+
+    if (!result?.matchedCount) {
+      throw new AppError(`Balloon ${balloonId} not found`, 404);
+    }
+
+    const { matchedCount, modifiedCount } = result;
+
+    return { matchedCount, modifiedCount };
+  },
+
   async updateManyBalloons(query, updates) {
     const result = await balloonsRepository.updateBalloons(
       toFilter(query),
