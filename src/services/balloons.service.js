@@ -33,8 +33,9 @@ const toBalloonDoc = (item, index) => {
 const toFilter = (query = {}) => {
   const filter = {};
 
-  if (query.color !== undefined)
+  if (query.color !== undefined) {
     filter.color = String(query.color).trim().toLowerCase();
+  }
 
   if (query.shape !== undefined) {
     if (!SHAPES.includes(query.shape)) {
