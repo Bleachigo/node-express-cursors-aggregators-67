@@ -61,20 +61,20 @@ export const balloonsController = {
 
   async deleteBalloons(req, res, next) {
     try {
-      const { color, shape } = req.query;
+      const { color: matchColor, shape: matchShape } = req.query;
 
-      if (typeof color !== 'string' || !color) {
+      if (typeof matchColor !== 'string' || !matchColor) {
         throw new AppError('Query param "color" is required', 400);
       }
 
-      if (typeof shape !== 'string' || !shape) {
+      if (typeof matchShape !== 'string' || !matchShape) {
         throw new AppError('Query param "shape" is required', 400);
       }
-      const query = { color, shape };
-      const result = await balloonsService.updateManyBalloons(query);
+      const query = { color: matchColor, shape: matchShape };
+      const result = await balloonsService.deleteManyBalloons(query);
 
       res.status(200).json({
-        matched: result.deletedCount,
+        message: `${result} document/s deleted`,
       });
     } catch (error) {
       next(error);
