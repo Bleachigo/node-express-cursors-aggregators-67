@@ -92,4 +92,17 @@ export const balloonsService = {
 
     return { matchedCount, modifiedCount };
   },
+
+  async deleteManyBalloons(query) {
+    const result = await balloonsRepository.deleteBalloons(toFilter(query));
+
+    if (!result?.deletedCount) {
+      throw new AppError(
+        `Balloons with ${Object.keys(query)} field/s not found`,
+        404,
+      );
+    }
+
+    return result.deletedCount;
+  },
 };
