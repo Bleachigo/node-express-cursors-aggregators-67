@@ -1,242 +1,244 @@
-# Express Server
+# Express Server with MongoDB
 
-A student project using Node.js and Express 5 to demonstrate routes, controllers, middleware, Passport-based authentication with server-side sessions, cookies, server-side view rendering (EJS/Pug), and calling an external API.
+A student project using Node.js, Express 5 and MongoDB Atlas. It implements create, read, update, replace and delete operations with the official `mongodb` driver, behind an MVC-style REST API.
 
-Repository: [Bleachigo/nodejs-express-passport-64](https://github.com/Bleachigo/nodejs-express-passport-64)
+Repository: [Bleachigo/node-express-mongodb-65-66](https://github.com/Bleachigo/node-express-mongodb-65-66)
+
+## Technologies
+
+- **Node.js** 20.11 or newer (`--env-file`, `import.meta.dirname`)
+- **Express.js** 5
+- **MongoDB Atlas** through the official `mongodb` driver (7.6)
 
 ## Installation and startup
 
-Use Node.js 18 or newer (for the built-in `fetch` API) and npm.
-
 ```bash
-git clone https://github.com/Bleachigo/nodejs-express-passport-64
+git clone https://github.com/Bleachigo/node-express-mongodb-65-66.git
+cd node-express-mongodb-65-66
 npm ci
-cp .env.example .env   # then edit .env with your own secrets
-npm start
+cp .env.example .env   # then fill in your own values
+npm start              # or: npm run dev (restarts on file changes)
 ```
 
-The server listens on the port set by `PORT` in `.env` (defaults to `3000` in `.env.example`).
+On startup the server connects to MongoDB, pings the database, and only then starts listening on `PORT`. `Ctrl+C` (or `SIGTERM`) stops the HTTP server and closes the MongoDB connection.
 
 ### Environment variables
 
-| Variable         | Required | Description                                                                                                                                          |
-| ---------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`           | No       | Port the server listens on.                                                                                                                          |
-| `SESSION_SECRET` | Yes      | Secret used to sign the session cookie. No built-in default — the app relies on `express-session`, which throws at startup if this is missing.       |
-| `NODE_ENV`       | No       | `development` (default in `.env.example`) or `production`. In production the session cookie gets the `Secure` flag and Express trusts one proxy hop. |
+| Variable          | Required | Description                                                              |
+| ----------------- | -------- | ------------------------------------------------------------------------ |
+| `PORT`            | No       | Port the server listens on (`3000` in `.env.example`).                   |
+| `SESSION_SECRET`  | Yes      | Secret used to sign the session cookie.                                  |
+| `NODE_ENV`        | No       | `development` (default in `.env.example`) or `production`.               |
+| `MONGODB_URI`     | Yes      | MongoDB Atlas SRV connection string (`mongodb+srv://…`).                 |
+| `MONGODB_DB_NAME` | Yes      | Database name. Holds the `users`, `balloons` and `sessions` collections. |
 
 See `.env.example` for the expected format.
 
 ## Project structure
 
 ```text
-nodejs-express-63/
-├── app.js                  # Express setup and middleware registration
-├── server.js               # Starts the server
-├── package.json
-├── package-lock.json
-├── public/
-│   ├── favicon.ico         # Served at /favicon.ico via express.static
-│   └── css/styles.css
-└── src/
-    ├── config/
-    │   └── passport.config.js   # Local strategy, serializeUser/deserializeUser
-    ├── controllers/         # Route handlers (render views or send text/JSON)
-    ├── routes/              # auth, root, users, articles, theme endpoints
-    ├── middleware/          # Logging, session auth, authorization, validation, theme, errors
-    ├── services/            # Business logic (auth, users, articles)
-    ├── repositories/        # JSON-file-backed user persistence (src/data/users.json)
-    ├── data/
-    │   ├── users.json       # Local user store, used until a real DB is added
-    │   └── sessions/        # Session records written by session-file-store
-    ├── views/               # EJS templates (articles) and Pug templates (users)
-    └── utils/
-        ├── AppError.js      # Error with an HTTP status code
-        └── password.js      # Hash/verify passwords with bcrypt
+src/
+├── config/
+│   └── mongodb.config.js        # MongoClient, connectMongo / getCollection / closeMongo
+├── routes/                      # users.routes.js, balloons.routes.js, auth.routes.js
+├── controllers/                 # Read the request, call a service, send the response
+├── services/                    # Validation, filters, 404 checks
+└── repositories/
+    ├── mongodb.repository.js    # Generic wrappers around the driver's CRUD methods
+    ├── users.repository.js      # `users` collection, projection of public fields
+    └── balloons.repository.js   # `balloons` collection
 ```
 
-The application follows an MVC-style separation between routing, controllers, and services. Registered users are persisted locally in `src/data/users.json` (a stand-in for a real database); `GET /users`, `GET /users/:userId`, and `PATCH /users/:userId` all read/write this file, while `POST`/`PUT`/`DELETE` on `/users` are still placeholder text responses that don't touch it. Article data is not stored locally: `GET` article requests fetch live data from the [JSONPlaceholder](https://jsonplaceholder.typicode.com) demo API and render it into HTML views. Article write operations (`POST`/`PUT`/`DELETE`) are simulated and return plain-text acknowledgements only.
+Requests flow routes → controllers → services → repositories → MongoDB. `mongodb.repository.js` is the only file that calls the driver directly; the collection repositories convert string ids to `ObjectId` and map `_id` to a string `id` in results. An invalid id is answered with `404`, the same as an id that doesn't exist.
 
-## Middleware
+## MongoDB CRUD operations
 
-Middleware runs in this order:
+Each homework task and where it is implemented. Where a `findOneAnd…` method is used instead of the plain one, the route returns the changed document rather than a result summary.
 
-1. **Logging:** records the timestamp, method, URL, response status, and duration when a response finishes. It runs before body parsing, so malformed JSON requests are logged too.
-2. **Security headers:** `helmet` applies its default set of response headers.
-3. **Static files:** serves everything in `public/`, including `favicon.ico` and `css/styles.css`.
-4. **Body parsing:** accepts JSON and URL-encoded form data.
-5. **Cookies:** `cookie-parser` reads incoming cookies (used for the theme preference; the session cookie is handled by `express-session`).
-6. **Sessions:** `express-session` backed by `session-file-store`, with a cookie named `sid` (`HttpOnly`, `SameSite=Lax`, `Secure` in production) and a one-hour sliding expiry (`rolling: true`). Sessions are written to `src/data/sessions/`, so they survive a server restart. The root route increments a visit counter; reuse the session cookie to retain it.
-7. **Passport:** `passport.initialize()` and `passport.session()` restore `req.user` from the session on every request.
-8. **Theme:** reads the `theme` cookie and exposes it to views as `res.locals.theme` (defaulting to `light`).
-9. **Route middleware:** `authenticateLocal` on login, `requireAuth` on protected routes, `authorize('admin')` on admin-only routes, and body validation on user-input routes.
-10. **Not found and error handling:** returns textual error messages with the appropriate HTTP status. Unexpected server errors are logged and return `Internal server error`.
+| Task           | Driver method                                 | Route                                                  | Repository method                                                       |
+| -------------- | --------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------- |
+| Create one     | `insertOne`                                   | `POST /auth/register`                                  | `mongoRepository.insertDocument` → `usersRepository.createOne`          |
+| Create many    | `insertMany`                                  | `POST /balloons`                                       | `mongoRepository.insertDocuments` → `balloonsRepository.createMany`     |
+| Update one     | `updateOne`                                   | `PATCH /balloons/:balloonId`                           | `mongoRepository.updateOne` → `balloonsRepository.updateBalloon`        |
+|                | `findOneAndUpdate` (instead of `updateOne`)   | `PATCH /users/:userId`                                 | `mongoRepository.updateDocument` → `usersRepository.update`             |
+| Update many    | `updateMany`                                  | `PATCH /balloons?color=…&shape=…`                      | `mongoRepository.updateDocuments` → `balloonsRepository.updateBalloons` |
+| Replace one    | `replaceOne`                                  | `PUT /balloons/:balloonId`                             | `mongoRepository.replaceOne` → `balloonsRepository.replaceBalloon`      |
+|                | `findOneAndReplace` (instead of `replaceOne`) | `PUT /users/:userId`                                   | `mongoRepository.replaceDocument` → `usersRepository.replace`           |
+| Delete one     | `deleteOne`                                   | `DELETE /balloons/:balloonId`, `DELETE /users/:userId` | `mongoRepository.deleteDocument`                                        |
+| Delete many    | `deleteMany`                                  | `DELETE /balloons?color=…&shape=…`                     | `mongoRepository.deleteDocuments` → `balloonsRepository.deleteBalloons` |
+| Read + project | `find` / `findOne` with `projection`          | `GET /users`, `GET /users/:userId`                     | `mongoRepository.findDocuments` / `findDocument`                        |
 
-## Static files & favicon
+### Reading with projection
 
-`public/favicon.ico` is served by `express.static` at `/favicon.ico`. Every EJS/Pug view includes:
+`users.repository.js` applies `projection: { email: 1, role: 1 }` to every read by default, so `passwordHash` never leaves the repository. Only `findCredentialsByEmail`, used at login, adds `passwordHash: 1`, and the hash is stripped again before the user is returned. `findAll` and `findById` accept extra driver options (`limit`, `skip`, `sort`, …) that are merged over the default projection.
 
-```html
-<link rel="icon" href="/favicon.ico" />
-```
+### Filters for many-document operations
 
-so the favicon shows up on all rendered pages (`views/articles/*.ejs`, `views/users/*.pug`).
-
-## Theme cookie
-
-`POST /theme` lets a client save a preferred UI theme (`light` or `dark`) in a cookie, read back on every request via `theme.middleware.js` and exposed to templates as `theme` (used as a `<body class>` in both the EJS and Pug views).
-
-```bash
-curl -i -c cookies.txt -X POST http://localhost:3000/theme \
-  -H 'Content-Type: application/json' \
-  -d '{"theme":"dark"}'
-
-# Theme cookie is now sent on subsequent requests:
-curl -b cookies.txt http://localhost:3000/users
-```
-
-## Authentication (Passport + sessions)
-
-Authentication uses Passport's local strategy with email and password, and server-side sessions. There is no fixed set of demo credentials — accounts are created via `POST /auth/register`.
-
-- **Strategy** (`src/config/passport.config.js`): `passport-local` configured with `usernameField: 'email'`. It calls `verifyCredentials`, which looks the user up in `src/data/users.json` and compares the password against the stored `bcryptjs` hash.
-- **Session serialization:** `serializeUser` stores only the user's id in the session; `deserializeUser` loads the user on each request and attaches `req.user = { id, email, role }` — the password hash is deliberately left out.
-- **Session storage:** the session id travels in a signed cookie named `sid` (`HttpOnly`, `SameSite=Lax`, `Secure` when `NODE_ENV=production`) with a one-hour sliding expiry. The session data itself lives on the server in `src/data/sessions/`, written by `session-file-store`, so restarting the server does not log anyone out.
-- **Login** (`authenticateLocal` in `src/middleware/auth.middleware.js`): wraps `passport.authenticate('local', …)` in a custom callback so failures surface as an `AppError` (`401 Invalid email or password`) through the central error handler, then calls `req.logIn` to create the session.
-- **Protected routes** (`requireAuth`): rejects the request with `401 Unauthorized` unless `req.isAuthenticated()` is true. It guards `/users`, `/articles`, `GET /auth/me`, and `POST /auth/logout`.
-- **Role check** (`authorize(...roles)` in `src/middleware/authorization.middleware.js`): runs after `requireAuth` and answers `403 Access denied` unless `req.user.role` is one of the listed roles. It guards `PUT`/`PATCH` under `/users` and `POST`/`PUT`/`DELETE` under `/articles`.
-- **Logout:** `req.logout()` followed by `req.session.destroy()`, which also deletes the session file on disk.
-
-There is no dedicated superuser-provisioning flow yet: the first admin account is created by registering normally and then manually flipping that user's `role` to `"admin"` in `src/data/users.json`.
+`updateMany` and `deleteMany` on balloons build their filter from the `color` and `shape` query parameters. The color is trimmed and lowercased, the shape must be one of `round`, `heart`, `star`, and an empty filter is rejected with `400`, so a request can never update or delete the whole collection.
 
 ## Routes
 
-### Root
-
-| Method | Path | Response                                  |
-| ------ | ---- | ----------------------------------------- |
-| GET    | `/`  | `Get root route. Session visits: {count}` |
-
-No authentication is required.
-
-### Theme
-
-| Method | Path     | Body                             | Response                                                                |
-| ------ | -------- | -------------------------------- | ----------------------------------------------------------------------- |
-| POST   | `/theme` | `{ "theme": "light" \| "dark" }` | `{ "message": "Theme saved", "theme": "..." }`, sets the `theme` cookie |
-
-No authentication is required.
-
 ### Auth
 
-| Method | Path             | Auth required | Body                                          | Response                                                             |
-| ------ | ---------------- | ------------- | --------------------------------------------- | -------------------------------------------------------------------- |
-| POST   | `/auth/register` | No            | `{ "email", "password" }` (non-empty strings) | `201` `{ "user": { "id", "email", "role" } }`                        |
-| POST   | `/auth/login`    | No            | `{ "email", "password" }`                     | `200` `{ "message": "Login successful", "user": {...} }`, sets `sid` |
-| GET    | `/auth/me`       | Yes           | —                                             | `{ "user": { "id", "email", "role" } }`                              |
-| POST   | `/auth/logout`   | Yes           | —                                             | `200` `{ "message": "Logout successful" }`, destroys the session     |
+Needed to create users and to reach the `/users` routes. Login opens a session (cookie `sid`) that the `/users` routes require.
 
-Registration does not open a session — log in afterwards to get one.
+| Method | Path             | Body                                          | Response                                                             |
+| ------ | ---------------- | --------------------------------------------- | -------------------------------------------------------------------- |
+| POST   | `/auth/register` | `{ "email", "password" }` (non-empty strings) | `201` `{ "user": { "id", "email", "role" } }` (`insertOne`)          |
+| POST   | `/auth/login`    | `{ "email", "password" }`                     | `200` `{ "message": "Login successful", "user": {...} }`, sets `sid` |
+| POST   | `/auth/logout`   | —                                             | `200` `{ "message": "Logout successful" }`                           |
+
+The password is stored as a bcrypt hash (`passwordHash`); new users get the role `user`. To make an admin, change the user's `role` to `"admin"` in the `users` collection (Atlas Data Explorer or `mongosh`).
 
 ### Users
 
-All routes require an authenticated session. `PUT`/`PATCH` additionally require the `admin` role.
+All routes require a logged-in session. `PUT`, `PATCH` and `DELETE` additionally require the `admin` role. `:userId` is a MongoDB `ObjectId` string.
 
-| Method | Path             | Auth  | Body                      | Response                                                                                |
-| ------ | ---------------- | ----- | ------------------------- | --------------------------------------------------------------------------------------- |
-| GET    | `/users`         | user  | —                         | Renders `src/views/users/index.pug` with all users from `src/data/users.json`           |
-| POST   | `/users`         | user  | `{ "email", "password" }` | `Post user by id: {userId}` (placeholder response; does not persist)                    |
-| GET    | `/users/:userId` | user  | —                         | Renders `src/views/users/details.pug` with the matching user from `src/data/users.json` |
-| PUT    | `/users/:userId` | admin | `{ "email", "password" }` | `Put user by Id route: {userId}` (placeholder response; does not persist)               |
-| PATCH  | `/users/:userId` | admin | `{ "email", "password" }` | Updates and returns the stored user record (JSON) from `src/data/users.json`            |
-| DELETE | `/users/:userId` | user  | —                         | `Delete user by Id route: {userId}` (placeholder response; does not persist)            |
+| Method | Path             | Auth  | Body                              | Response                                                                   |
+| ------ | ---------------- | ----- | --------------------------------- | -------------------------------------------------------------------------- |
+| GET    | `/users`         | user  | —                                 | HTML list of every user's email and id (`find` + projection)               |
+| GET    | `/users/:userId` | user  | —                                 | HTML page for one user (`findOne` + projection)                            |
+| PUT    | `/users/:userId` | admin | `{ "email", "password", "role" }` | Replaces the whole user document and returns it (`findOneAndReplace`)      |
+| PATCH  | `/users/:userId` | admin | Fields to change                  | Updates the given fields and returns the updated user (`findOneAndUpdate`) |
+| DELETE | `/users/:userId` | admin | —                                 | Deletes the user (`deleteOne`)                                             |
 
-Note: `GET` and `PATCH` are wired to the local `src/data/users.json` store; `POST`, `PUT`, and `DELETE` are still placeholder text responses that ignore the body and don't touch it. The Pug views were originally written for the JSONPlaceholder user shape (`name`, `email`, numeric `id`) — local records only have `id` (UUID), `email`, `passwordHash`, and `role`, so `user.name` renders empty for `GET /users` and `GET /users/:userId`.
+`PUT` hashes the new password with bcrypt before storing it, so only `passwordHash` is saved.
 
-### Articles
+### Balloons
 
-All article routes require an authenticated session. `POST`, `PUT`, and `DELETE` additionally require the `admin` role.
+A demo collection for the bulk operations. `:balloonId` is a MongoDB `ObjectId` string.
 
-| Method | Path                   | Auth  | Response                                                                             |
-| ------ | ---------------------- | ----- | ------------------------------------------------------------------------------------ |
-| GET    | `/articles`            | user  | Renders `src/views/articles/index.ejs` with all posts from JSONPlaceholder           |
-| POST   | `/articles`            | admin | `Post articles route`                                                                |
-| GET    | `/articles/:articleId` | user  | Renders `src/views/articles/details.ejs` with the matching post from JSONPlaceholder |
-| PUT    | `/articles/:articleId` | admin | `Put article by Id route: {articleId}`                                               |
-| DELETE | `/articles/:articleId` | admin | `Delete article by Id route: {articleId}`                                            |
+A balloon has `color` (non-empty string, stored trimmed and lowercased), `shape` (`round`, `heart` or `star`), `size` (positive integer) and `createdAt` (set by the server).
+
+| Method | Path                            | Body                                          | Response                                                                   |
+| ------ | ------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------- |
+| POST   | `/balloons`                     | Array of 1–100 `{ "color", "shape", "size" }` | `201` array of created balloons with `id` and `createdAt` (`insertMany`)   |
+| PATCH  | `/balloons/:balloonId`          | Fields to change, e.g. `{ "size": 12 }`       | `200` `{ "matchedCount", "modifiedCount" }` (`updateOne`)                  |
+| PUT    | `/balloons/:balloonId`          | Full balloon `{ "color", "shape", "size" }`   | `200` `{ "matchedCount", "modifiedCount" }` (`replaceOne`)                 |
+| DELETE | `/balloons/:balloonId`          | —                                             | `200` `{ "message": "1 balloon {id} successfully deleted" }` (`deleteOne`) |
+| PATCH  | `/balloons?color={c}&shape={s}` | `{ "color": "<new color>" }`                  | `200` `{ "matched", "modified" }` (`updateMany`)                           |
+| DELETE | `/balloons?color={c}&shape={s}` | —                                             | `200` `{ "message": "{n} document/s deleted" }` (`deleteMany`)             |
+
+`POST /balloons` validates every item before inserting any, so a batch with one invalid item is rejected as a whole. `PATCH` and `DELETE` on `/balloons` require both `color` and `shape` query parameters.
 
 ### Errors
 
-| Status | Condition                                                                     | Response                                                     |
-| ------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| 400    | Missing or invalid `email`/`password` fields                                  | `Email and password must be non-empty strings`               |
-| 400    | Malformed JSON                                                                | Body parser's error message                                  |
-| 401    | No authenticated session on a protected route                                 | `Unauthorized`                                               |
-| 401    | Login with an unknown email or wrong password                                 | `Invalid email or password`                                  |
-| 403    | Authenticated account lacks the `admin` role on an admin-only route           | `Access denied`                                              |
-| 404    | `:userId` (PATCH) / `:articleId` doesn't exist                                | `User {userId} not found` / `Article not found`              |
-| 404    | Unmatched route after preceding middleware passes                             | `Route {method} {url} not found`                             |
-| 409    | Registering an email that already exists                                      | `User already exists`                                        |
-| 502    | The JSONPlaceholder articles API call fails for a reason other than not-found | `Failed to fetch articles` / `Failed to fetch article by id` |
-| 500    | Unexpected server error                                                       | `Internal server error`                                      |
+Errors are answered as plain text with the status below.
 
-## Testing with curl
+| Status | Condition                                                                | Response                                                                                   |
+| ------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| 400    | Missing or invalid `email`/`password`                                    | `Email and password must be non-empty strings`                                             |
+| 400    | Invalid balloon batch or item                                            | `Body must be an array of 1-100 balloons` / `Item {n}: …`                                  |
+| 400    | Missing `color`/`shape` query parameter or invalid filter on `/balloons` | `Query param "color" is required`, `shape must be one of …`                                |
+| 401    | No logged-in session on `/users`, or wrong email/password at login       | `Unauthorized` / `Invalid email or password`                                               |
+| 403    | The account lacks the `admin` role                                       | `Access denied`                                                                            |
+| 404    | User or balloon with that id doesn't exist (or the id is invalid)        | `User {id} not found` / `Balloon {id} not found` (`Balloon with {id} not found` on DELETE) |
+| 404    | No balloons match the `color`/`shape` filter                             | `Balloons with … field/s not found`                                                        |
+| 409    | Registering an email that already exists                                 | `User already exists`                                                                      |
+| 500    | Unexpected server error                                                  | `Internal server error`                                                                    |
 
-```bash
-# Root: create a session, then reuse it (counts 1 and 2).
-curl -c cookies.txt http://localhost:3000/
-curl -b cookies.txt -c cookies.txt http://localhost:3000/
+## Testing with Postman
 
-# Register a new account (does not log you in).
-curl -i -X POST http://localhost:3000/auth/register \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"student@mail.com","password":"test-password"}'
+### Before you start
 
-# Log in (stores the session cookie in cookies.txt for reuse below).
-curl -i -c cookies.txt -X POST http://localhost:3000/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"student@mail.com","password":"test-password"}'
+**Hard-coded names and fields.** The database name comes from `MONGODB_DB_NAME`, but the collection names and the balloon document shape are fixed in the code, so the tests only work with them:
 
-# Who am I.
-curl -b cookies.txt http://localhost:3000/auth/me
+| What                   | Hard-coded value                                      | Where                                     |
+| ---------------------- | ----------------------------------------------------- | ----------------------------------------- |
+| Bulk-operations data   | Collection `balloons`                                 | `src/repositories/balloons.repository.js` |
+| Users                  | Collection `users`                                    | `src/repositories/users.repository.js`    |
+| Sessions               | Collection `sessions` (created automatically)         | `app.js`                                  |
+| Balloon fields         | `color`, `shape` (string),, `size` (positive integer) | `src/services/balloons.service.js`        |
+| Allowed shapes         | `round`, `heart`, `star`                              | `src/services/balloons.service.js`        |
+| Filter for bulk routes | `color` and `shape` query parameters, both required   | `src/controllers/balloons.controller.js`  |
+| `updateMany` change    | Only `color` can be changed                           | `src/controllers/balloons.controller.js`  |
+| Batch size             | 1–100 balloons per `POST`                             | `src/services/balloons.service.js`        |
 
-# User list and individual user (renders HTML views); requires a session.
-curl -b cookies.txt http://localhost:3000/users
-curl -b cookies.txt http://localhost:3000/users/<userId>
+You don't need to create the collections in Atlas: MongoDB creates `balloons` and `users` on the first insert. If you add balloons by hand in Atlas, use the same fields and shapes, and lowercase colors, otherwise the filters won't find them.
 
-# Patch a locally stored user (requires the admin role on the logged-in account).
-curl -b cookies.txt -X PATCH http://localhost:3000/users/<userId> \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"student@mail.com","password":"new-password"}'
+**Postman setup.**
 
-# Save a UI theme preference.
-curl -b cookies.txt -c cookies.txt -X POST http://localhost:3000/theme \
-  -H 'Content-Type: application/json' \
-  -d '{"theme":"dark"}'
+1. Create an environment with the variable `baseUrl` = `http://localhost:3000`.
+2. For JSON bodies choose **Body → raw → JSON**.
+3. Postman keeps cookies per domain, so after **Login** the `sid` session cookie is sent automatically with every later request. The `/users` routes need it; `/balloons` doesn't.
+4. `:userId` and `:balloonId` are MongoDB ids (24 hex characters). Copy them from earlier responses: `id` from **Register** or from the **POST /balloons** response.
+5. The admin-only user routes need an account with `role: "admin"`. Register it, change `role` to `"admin"` in the `users` collection in Atlas, then log in again.
 
-# Articles: reading needs a session, writing needs the admin role.
-curl -b cookies.txt http://localhost:3000/articles
-curl -b cookies.txt http://localhost:3000/articles/1
-curl -b cookies.txt -X POST http://localhost:3000/articles
-curl -b cookies.txt -X PUT http://localhost:3000/articles/1
-curl -b cookies.txt -X DELETE http://localhost:3000/articles/1
+Run the tests in the order below: each block uses data created by the one before it.
 
-# Sessions survive a restart: stop the server, start it again, then
-curl -b cookies.txt http://localhost:3000/auth/me   # still 200
+### 1. Auth — `insertOne`
 
-# Log out (destroys the session; the cookie stops working).
-curl -b cookies.txt -X POST http://localhost:3000/auth/logout
+| #   | Request               | Method | URL                         | Body (raw JSON)                                                | Expected                                                                          |
+| --- | --------------------- | ------ | --------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| 1   | Register              | POST   | `{{baseUrl}}/auth/register` | `{ "email": "student@mail.com", "password": "test-password" }` | `201` `{ "user": { "id", "email", "role": "user" } }` — a new document in `users` |
+| 2   | Register again        | POST   | `{{baseUrl}}/auth/register` | same as #1                                                     | `409` `User already exists`                                                       |
+| 3   | Register, empty body  | POST   | `{{baseUrl}}/auth/register` | `{}`                                                           | `400` `Email and password must be non-empty strings`                              |
+| 4   | Login                 | POST   | `{{baseUrl}}/auth/login`    | same as #1                                                     | `200` `{ "message": "Login successful", "user": {...} }`, sets the `sid` cookie   |
+| 5   | Login, wrong password | POST   | `{{baseUrl}}/auth/login`    | `{ "email": "student@mail.com", "password": "wrong" }`         | `401` `Invalid email or password`                                                 |
 
-# Failure cases: no session (401), denied role (403),
-# missing register/login fields (400), unknown route (404).
-curl -i http://localhost:3000/users
-curl -i -H 'Cookie: sid=not-a-real-session' http://localhost:3000/users
-curl -i -b cookies.txt -X POST http://localhost:3000/articles   # as a non-admin account
-curl -i -X POST http://localhost:3000/auth/register -H 'Content-Type: application/json' -d '{}'
-curl -i http://localhost:3000/missing
-```
+### 2. Users — `find`, `findOne` with projection
 
-The session/theme examples create a local `cookies.txt` file, which can be deleted after testing. There is currently no `npm test` script; use the examples above for manual verification.
+Logged in as any user (request #4).
+
+| #   | Request           | Method | URL                                          | Body | Expected                                                            |
+| --- | ----------------- | ------ | -------------------------------------------- | ---- | ------------------------------------------------------------------- |
+| 1   | All users         | GET    | `{{baseUrl}}/users`                          | —    | `200` HTML list with each user's email and id; no password hashes   |
+| 2   | One user          | GET    | `{{baseUrl}}/users/:userId`                  | —    | `200` HTML page for that user                                       |
+| 3   | Unknown id        | GET    | `{{baseUrl}}/users/000000000000000000000000` | —    | `404` `User 000000000000000000000000 not found`                     |
+| 4   | Without a session | GET    | `{{baseUrl}}/users`                          | —    | `401` `Unauthorized` (delete the `sid` cookie in **Cookies** first) |
+
+### 3. Users — `findOneAndUpdate`, `findOneAndReplace`, `deleteOne`
+
+Logged in as an **admin**. Use the id of a test user, not your admin account.
+
+| #   | Request        | Method | URL                         | Body (raw JSON)                                                               | Expected                                                      |
+| --- | -------------- | ------ | --------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| 1   | Update fields  | PATCH  | `{{baseUrl}}/users/:userId` | `{ "email": "student2@mail.com" }`                                            | `200` the updated user `{ "id", "email", "role" }`            |
+| 2   | Replace user   | PUT    | `{{baseUrl}}/users/:userId` | `{ "email": "student@mail.com", "password": "new-password", "role": "user" }` | `200` the new user document; the password is stored as a hash |
+| 3   | Delete user    | DELETE | `{{baseUrl}}/users/:userId` | —                                                                             | The user is removed from `users`                              |
+| 4   | As a non-admin | PATCH  | `{{baseUrl}}/users/:userId` | `{ "email": "x@mail.com" }`                                                   | `403` `Access denied`                                         |
+
+### 4. Balloons — `insertMany`
+
+No login needed.
+
+| #   | Request         | Method | URL                    | Body (raw JSON)                                                                                                                                          | Expected                                                                     |
+| --- | --------------- | ------ | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| 1   | Create balloons | POST   | `{{baseUrl}}/balloons` | `[{ "color": "red", "shape": "heart", "size": 10 }, { "color": "red", "shape": "heart", "size": 8 }, { "color": "blue", "shape": "round", "size": 12 }]` | `201` array of 3 balloons, each with `id` and `createdAt`                    |
+| 2   | Invalid shape   | POST   | `{{baseUrl}}/balloons` | `[{ "color": "red", "shape": "cube", "size": 1 }]`                                                                                                       | `400` `Item 0: shape must be one of round, heart, star`; nothing is inserted |
+| 3   | Not an array    | POST   | `{{baseUrl}}/balloons` | `{ "color": "red", "shape": "heart", "size": 1 }`                                                                                                        | `400` `Body must be an array of 1-100 balloons`                              |
+
+Copy the `id` of the blue balloon for the next block.
+
+### 5. Balloons by id — `updateOne`, `replaceOne`, `deleteOne`
+
+| #   | Request           | Method | URL                               | Body (raw JSON)                                    | Expected                                                            |
+| --- | ----------------- | ------ | --------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------- |
+| 1   | Update fields     | PATCH  | `{{baseUrl}}/balloons/:balloonId` | `{ "size": 15 }`                                   | `200` `{ "matchedCount": 1, "modifiedCount": 1 }`                   |
+| 2   | Same update again | PATCH  | `{{baseUrl}}/balloons/:balloonId` | `{ "size": 15 }`                                   | `200` `{ "matchedCount": 1, "modifiedCount": 0 }` — nothing changed |
+| 3   | Replace balloon   | PUT    | `{{baseUrl}}/balloons/:balloonId` | `{ "color": "green", "shape": "star", "size": 9 }` | `200` `{ "matchedCount": 1, "modifiedCount": 1 }`                   |
+| 4   | Delete balloon    | DELETE | `{{baseUrl}}/balloons/:balloonId` | —                                                  | `200` `{ "message": "1 balloon <id> successfully deleted" }`        |
+| 5   | Delete it again   | DELETE | `{{baseUrl}}/balloons/:balloonId` | —                                                  | `404` `Balloon with <id> not found`                                 |
+
+### 6. Balloons by filter — `updateMany`, `deleteMany`
+
+Uses the two red hearts from block 4.
+
+| #   | Request         | Method | URL                                           | Body (raw JSON)       | Expected                                                             |
+| --- | --------------- | ------ | --------------------------------------------- | --------------------- | -------------------------------------------------------------------- |
+| 1   | Recolor many    | PATCH  | `{{baseUrl}}/balloons?color=red&shape=heart`  | `{ "color": "pink" }` | `200` `{ "matched": 2, "modified": 2 }`                              |
+| 2   | Nothing matches | PATCH  | `{{baseUrl}}/balloons?color=red&shape=heart`  | `{ "color": "pink" }` | `404` — the red hearts are pink now                                  |
+| 3   | Missing filter  | PATCH  | `{{baseUrl}}/balloons?color=pink`             | `{ "color": "red" }`  | `400` `Query param "shape" is required`                              |
+| 4   | Delete many     | DELETE | `{{baseUrl}}/balloons?color=pink&shape=heart` | —                     | `200` `{ "message": "2 document/s deleted" }`                        |
+| 5   | No filter       | DELETE | `{{baseUrl}}/balloons`                        | —                     | `400` `Query param "color" is required`; the collection is untouched |
+
+### 7. Logout
+
+| #   | Request | Method | URL                       | Body | Expected                                                                      |
+| --- | ------- | ------ | ------------------------- | ---- | ----------------------------------------------------------------------------- |
+| 1   | Logout  | POST   | `{{baseUrl}}/auth/logout` | —    | `200` `{ "message": "Logout successful" }`; `/users` answers `401` afterwards |
+
+There is no `npm test` script; the tables above are the manual test plan.
 
 ## Known limitations
 
