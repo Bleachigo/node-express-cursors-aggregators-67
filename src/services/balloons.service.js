@@ -73,4 +73,22 @@ export const balloonsService = {
 
     return { matchedCount, modifiedCount };
   },
+
+  async updateManyBalloons(query, updates) {
+    const result = await balloonsRepository.updateMany(
+      toFilter(query),
+      updates,
+    );
+
+    if (!result?.matchedCount) {
+      throw new AppError(
+        `Balloons with ${Object.keys(query)} field/s not found`,
+        404,
+      );
+    }
+
+    const { matchedCount, modifiedCount } = result;
+
+    return { matchedCount, modifiedCount };
+  },
 };
