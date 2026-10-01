@@ -61,6 +61,50 @@ export const balloonsRepository = {
     return mongoRepository.deleteDocument(COLLECTION, { _id });
   },
 
+  async getStats({ shape, minPrice, maxPrice, since } = {}) {
+    const match = {};
+
+    if (shape) match.shape = shape;
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      match.price = {};
+      if (minPrice !== undefined) match.price.$gte = minPrice;
+      if (maxPrice !== undefined) match.price.$lte = maxPrice;
+    }
+
+    if (since) match.createdAt = { $gte: since };
+
+    const pipeline = [
+      ...(Object.keys(match).length ? [{ $match: match }] : []),
+      {
+        $group: {
+          _id: '$shape',
+          count: { sum: 1 },
+          totalPrice: { $sum: '$price' },
+          avgPrice: { $avg: '$price' },
+          minPrice: { $min: '$price' },
+          maxPrice: { $max: '$price' },
+          names: { $addToSet: '$name' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          shape: '$_id',
+          count: 1,
+          totalPrice: 1,
+          avgPrice: { $round: ['$avgPrice', 2] },
+          minPrice: 1,
+          maxPrice: 1,
+          uniqueNames: { $size: '$names' },
+        },
+      },
+      { $sort: { count: -1 } },
+    ];
+
+    return getCollection(COLLECTION).aggregate(pipeline).toArray();
+  },
+
   async randomizePrices(min = 10, max = 200) {
     return getCollection(COLLECTION).updateMany({ price: { $exists: false } }, [
       {
