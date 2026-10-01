@@ -113,4 +113,14 @@ export const balloonsController = {
       next(error);
     }
   },
+
+  async getStats(req, res, next) {
+    try {
+      const stats = await balloonsService.getStats(req.query);
+
+      res.json(stats);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
