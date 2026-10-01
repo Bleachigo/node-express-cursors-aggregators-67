@@ -79,7 +79,7 @@ export const balloonsRepository = {
       {
         $group: {
           _id: '$shape',
-          count: { sum: 1 },
+          count: { $sum: 1 },
           totalPrice: { $sum: '$price' },
           avgPrice: { $avg: '$price' },
           minPrice: { $min: '$price' },
