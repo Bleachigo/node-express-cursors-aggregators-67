@@ -3,6 +3,7 @@ import { balloonsController } from '../controllers/balloons.controller.js';
 
 export const balloonsRouter = express.Router();
 
+balloonsRouter.get('/stats', balloonsController.getStats);
 balloonsRouter.post('/', balloonsController.postBalloons);
 balloonsRouter.patch('/:balloonId', balloonsController.patchBalloonById);
 balloonsRouter.put('/:balloonId', balloonsController.putBalloonById);
