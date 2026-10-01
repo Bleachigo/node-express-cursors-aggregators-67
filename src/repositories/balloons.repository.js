@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { ObjectId } from 'mongodb';
 import { mongoRepository } from './mongodb.repository.js';
+import { getCollection } from '../config/mongodb.config.js';
 
 const COLLECTION = 'balloons';
 const toBalloon = ({ _id, ...rest }) => ({ ...rest, id: _id.toString() });
@@ -60,9 +61,8 @@ export const balloonsRepository = {
     return mongoRepository.deleteDocument(COLLECTION, { _id });
   },
 
-  async randomaizePrices(min = 10, max = 200) {
-    const db = process.env.MONGO_DB;
-    return db.collection(COLLECTION).updateMany({}, [
+  async randomizePrices(min = 10, max = 200) {
+    return getCollection(COLLECTION).updateMany({ price: { $exists: false } }, [
       {
         $set: {
           price: {
