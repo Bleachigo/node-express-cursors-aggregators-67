@@ -127,4 +127,38 @@ export const balloonsService = {
 
     return result.deletedCount;
   },
+
+  async getStats({ shape, minPrice, maxPrice, days }) {
+    const filters = {};
+
+    if (shape) filters.shape = String(shape);
+
+    if (minPrice !== undefined) {
+      filters.minPrice = Number(minPrice);
+
+      if (Number.isNaN(filters.minPrice)) {
+        throw new AppError('minPrice must be a number', 400);
+      }
+    }
+
+    if (maxPrice !== undefined) {
+      filters.maxPrice = Number(maxPrice);
+
+      if (Number.isNaN(filters.maxPrice)) {
+        throw new AppError('maxPrice must be a number', 400);
+      }
+    }
+
+    if (days !== undefined) {
+      const n = Number(days);
+
+      if (Number.isNaN(n) || n <= 0) {
+        throw new AppError('days must be a positive number', 400);
+      }
+
+      filters.since = new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+    }
+
+    return balloonsRepository.getStats(filters);
+  },
 };
