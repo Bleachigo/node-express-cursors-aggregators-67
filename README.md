@@ -1,8 +1,8 @@
 # Express Server with MongoDB
 
-A student project using Node.js, Express 5 and MongoDB Atlas. It implements create, read, update, replace and delete operations with the official `mongodb` driver, behind an MVC-style REST API.
+A student project using Node.js, Express 5 and MongoDB Atlas. It implements create, read, update, replace and delete operations and an aggregation query with the official `mongodb` driver, behind an MVC-style REST API.
 
-Repository: [Bleachigo/node-express-mongodb-65-66](https://github.com/Bleachigo/node-express-mongodb-65-66)
+Repository: [Bleachigo/node-express-mongodb-67](https://github.com/Bleachigo/node-express-cursors-aggregators-67)
 
 ## Technologies
 
@@ -43,13 +43,15 @@ src/
 ├── routes/                      # users.routes.js, balloons.routes.js, auth.routes.js
 ├── controllers/                 # Read the request, call a service, send the response
 ├── services/                    # Validation, filters, 404 checks
-└── repositories/
-    ├── mongodb.repository.js    # Generic wrappers around the driver's CRUD methods
-    ├── users.repository.js      # `users` collection, projection of public fields
-    └── balloons.repository.js   # `balloons` collection
+├── repositories/
+│   ├── mongodb.repository.js    # Generic wrappers around the driver's CRUD methods
+│   ├── users.repository.js      # `users` collection, projection of public fields
+│   └── balloons.repository.js   # `balloons` collection, aggregation pipeline
+└── scripts/
+    └── seed-prices.js           # One-off script: gives every balloon a random `price`
 ```
 
-Requests flow routes → controllers → services → repositories → MongoDB. `mongodb.repository.js` is the only file that calls the driver directly; the collection repositories convert string ids to `ObjectId` and map `_id` to a string `id` in results. An invalid id is answered with `404`, the same as an id that doesn't exist.
+Requests flow routes → controllers → services → repositories → MongoDB. The CRUD methods go through `mongodb.repository.js`; the aggregation pipeline and the price seeder in `balloons.repository.js` call the collection directly. The collection repositories convert string ids to `ObjectId` and map `_id` to a string `id` in results. An invalid id is answered with `404`, the same as an id that doesn't exist.
 
 ## MongoDB CRUD operations
 
@@ -75,6 +77,76 @@ Each homework task and where it is implemented. Where a `findOneAnd…` method i
 ### Filters for many-document operations
 
 `updateMany` and `deleteMany` on balloons build their filter from the `color` and `shape` query parameters. The color is trimmed and lowercased, the shape must be one of `round`, `heart`, `star`, and an empty filter is rejected with `400`, so a request can never update or delete the whole collection.
+
+## Cursors and aggregation
+
+The second part of the homework.
+
+| Task                                                                                   | Status              | Where                                                 |
+| -------------------------------------------------------------------------------------- | ------------------- | ----------------------------------------------------- |
+| Routes that iterate over documents with a cursor instead of loading them into an array | Not implemented yet | —                                                     |
+| An aggregation query with statistics (average, sum, number of unique values)           | Done                | `GET /balloons/stats` → `balloonsRepository.getStats` |
+
+### Cursors
+
+Not implemented yet. Every read still ends in `.toArray()` (`mongoRepository.findDocuments`, and the aggregation below), so the whole result is held in memory before it is sent.
+
+### Aggregation: `GET /balloons/stats`
+
+Returns price statistics for balloons, one object per shape, with the largest group first. The pipeline in `balloonsRepository.getStats` has four stages:
+
+| Stage      | What it does                                                                                                                                                               |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$match`   | Keeps only the balloons that pass the optional filters below. Skipped when no filter is given.                                                                             |
+| `$group`   | Groups by `shape` and computes `count` (`$sum: 1`), `totalPrice` (`$sum`), `avgPrice` (`$avg`), `minPrice` (`$min`), `maxPrice` (`$max`) and a set of names (`$addToSet`). |
+| `$project` | Renames `_id` to `shape`, rounds `avgPrice` to 2 decimals (`$round`) and turns the set into a number, `uniqueNames` (`$size`).                                             |
+| `$sort`    | Sorts by `count`, descending.                                                                                                                                              |
+
+All query parameters are optional and can be combined:
+
+| Parameter  | Meaning                                    | Invalid value                          |
+| ---------- | ------------------------------------------ | -------------------------------------- |
+| `shape`    | Only balloons of this shape                | An unknown shape gives an empty array  |
+| `minPrice` | Only balloons with `price` ≥ this number   | `400` `minPrice must be a number`      |
+| `maxPrice` | Only balloons with `price` ≤ this number   | `400` `maxPrice must be a number`      |
+| `days`     | Only balloons created in the last _n_ days | `400` `days must be a positive number` |
+
+Example response for `GET /balloons/stats`:
+
+```json
+[
+  {
+    "count": 6,
+    "totalPrice": 514.11,
+    "minPrice": 24.8,
+    "maxPrice": 126.33,
+    "shape": "round",
+    "avgPrice": 85.69,
+    "uniqueNames": 0
+  },
+  {
+    "count": 5,
+    "totalPrice": 525.28,
+    "minPrice": 11.48,
+    "maxPrice": 192.48,
+    "shape": "star",
+    "avgPrice": 105.06,
+    "uniqueNames": 0
+  }
+]
+```
+
+`uniqueNames` is always `0` at the moment: the pipeline collects the `name` field, and balloons don't have one (see [Known limitations](#known-limitations)).
+
+### Seeding prices
+
+The statistics need a `price` field, which `POST /balloons` doesn't set. A one-off script adds a random price from 10 to 200, rounded to 2 decimals, to every balloon that has none:
+
+```bash
+node src/scripts/seed-prices.js   # run from the project root, so that .env is found
+```
+
+It prints `Updated {n} balloons`. Balloons that already have a price are left alone, so it is safe to run again after adding new balloons. The script uses `updateMany` with an aggregation pipeline (`$set` with `$rand`, `$multiply`, `$add` and `$round`), so the prices are generated by MongoDB, not in Node.
 
 ## Routes
 
@@ -108,16 +180,17 @@ All routes require a logged-in session. `PUT`, `PATCH` and `DELETE` additionally
 
 A demo collection for the bulk operations. `:balloonId` is a MongoDB `ObjectId` string.
 
-A balloon has `color` (non-empty string, stored trimmed and lowercased), `shape` (`round`, `heart` or `star`), `size` (positive integer) and `createdAt` (set by the server).
+A balloon has `color` (non-empty string, stored trimmed and lowercased), `shape` (`round`, `heart` or `star`), `size` (positive integer), `createdAt` (set by the server) and `price` (a number, set only by the [seed script](#seeding-prices)).
 
-| Method | Path                            | Body                                          | Response                                                                   |
-| ------ | ------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------- |
-| POST   | `/balloons`                     | Array of 1–100 `{ "color", "shape", "size" }` | `201` array of created balloons with `id` and `createdAt` (`insertMany`)   |
-| PATCH  | `/balloons/:balloonId`          | Fields to change, e.g. `{ "size": 12 }`       | `200` `{ "matchedCount", "modifiedCount" }` (`updateOne`)                  |
-| PUT    | `/balloons/:balloonId`          | Full balloon `{ "color", "shape", "size" }`   | `200` `{ "matchedCount", "modifiedCount" }` (`replaceOne`)                 |
-| DELETE | `/balloons/:balloonId`          | —                                             | `200` `{ "message": "1 balloon {id} successfully deleted" }` (`deleteOne`) |
-| PATCH  | `/balloons?color={c}&shape={s}` | `{ "color": "<new color>" }`                  | `200` `{ "matched", "modified" }` (`updateMany`)                           |
-| DELETE | `/balloons?color={c}&shape={s}` | —                                             | `200` `{ "message": "{n} document/s deleted" }` (`deleteMany`)             |
+| Method | Path                            | Body                                          | Response                                                                                             |
+| ------ | ------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| GET    | `/balloons/stats`               | —                                             | `200` array of price statistics per shape (`aggregate`), see [above](#aggregation-get-balloonsstats) |
+| POST   | `/balloons`                     | Array of 1–100 `{ "color", "shape", "size" }` | `201` array of created balloons with `id` and `createdAt` (`insertMany`)                             |
+| PATCH  | `/balloons/:balloonId`          | Fields to change, e.g. `{ "size": 12 }`       | `200` `{ "matchedCount", "modifiedCount" }` (`updateOne`)                                            |
+| PUT    | `/balloons/:balloonId`          | Full balloon `{ "color", "shape", "size" }`   | `200` `{ "matchedCount", "modifiedCount" }` (`replaceOne`)                                           |
+| DELETE | `/balloons/:balloonId`          | —                                             | `200` `{ "message": "1 balloon {id} successfully deleted" }` (`deleteOne`)                           |
+| PATCH  | `/balloons?color={c}&shape={s}` | `{ "color": "<new color>" }`                  | `200` `{ "matched", "modified" }` (`updateMany`)                                                     |
+| DELETE | `/balloons?color={c}&shape={s}` | —                                             | `200` `{ "message": "{n} document/s deleted" }` (`deleteMany`)                                       |
 
 `POST /balloons` validates every item before inserting any, so a batch with one invalid item is rejected as a whole. `PATCH` and `DELETE` on `/balloons` require both `color` and `shape` query parameters.
 
@@ -130,6 +203,7 @@ Errors are answered as plain text with the status below.
 | 400    | Missing or invalid `email`/`password`                                    | `Email and password must be non-empty strings`                                             |
 | 400    | Invalid balloon batch or item                                            | `Body must be an array of 1-100 balloons` / `Item {n}: …`                                  |
 | 400    | Missing `color`/`shape` query parameter or invalid filter on `/balloons` | `Query param "color" is required`, `shape must be one of …`                                |
+| 400    | Invalid `minPrice`, `maxPrice` or `days` on `/balloons/stats`            | `minPrice must be a number`, `days must be a positive number`                              |
 | 401    | No logged-in session on `/users`, or wrong email/password at login       | `Unauthorized` / `Invalid email or password`                                               |
 | 403    | The account lacks the `admin` role                                       | `Access denied`                                                                            |
 | 404    | User or balloon with that id doesn't exist (or the id is invalid)        | `User {id} not found` / `Balloon {id} not found` (`Balloon with {id} not found` on DELETE) |
@@ -143,16 +217,17 @@ Errors are answered as plain text with the status below.
 
 **Hard-coded names and fields.** The database name comes from `MONGODB_DB_NAME`, but the collection names and the balloon document shape are fixed in the code, so the tests only work with them:
 
-| What                   | Hard-coded value                                      | Where                                     |
-| ---------------------- | ----------------------------------------------------- | ----------------------------------------- |
-| Bulk-operations data   | Collection `balloons`                                 | `src/repositories/balloons.repository.js` |
-| Users                  | Collection `users`                                    | `src/repositories/users.repository.js`    |
-| Sessions               | Collection `sessions` (created automatically)         | `app.js`                                  |
-| Balloon fields         | `color`, `shape` (string),, `size` (positive integer) | `src/services/balloons.service.js`        |
-| Allowed shapes         | `round`, `heart`, `star`                              | `src/services/balloons.service.js`        |
-| Filter for bulk routes | `color` and `shape` query parameters, both required   | `src/controllers/balloons.controller.js`  |
-| `updateMany` change    | Only `color` can be changed                           | `src/controllers/balloons.controller.js`  |
-| Batch size             | 1–100 balloons per `POST`                             | `src/services/balloons.service.js`        |
+| What                   | Hard-coded value                                     | Where                                     |
+| ---------------------- | ---------------------------------------------------- | ----------------------------------------- |
+| Bulk-operations data   | Collection `balloons`                                | `src/repositories/balloons.repository.js` |
+| Users                  | Collection `users`                                   | `src/repositories/users.repository.js`    |
+| Sessions               | Collection `sessions` (created automatically)        | `app.js`                                  |
+| Balloon fields         | `color`, `shape` (string), `size` (positive integer) | `src/services/balloons.service.js`        |
+| Statistics field       | `price` (number), grouped by `shape`                 | `src/repositories/balloons.repository.js` |
+| Allowed shapes         | `round`, `heart`, `star`                             | `src/services/balloons.service.js`        |
+| Filter for bulk routes | `color` and `shape` query parameters, both required  | `src/controllers/balloons.controller.js`  |
+| `updateMany` change    | Only `color` can be changed                          | `src/controllers/balloons.controller.js`  |
+| Batch size             | 1–100 balloons per `POST`                            | `src/services/balloons.service.js`        |
 
 You don't need to create the collections in Atlas: MongoDB creates `balloons` and `users` on the first insert. If you add balloons by hand in Atlas, use the same fields and shapes, and lowercase colors, otherwise the filters won't find them.
 
@@ -208,9 +283,22 @@ No login needed.
 | 2   | Invalid shape   | POST   | `{{baseUrl}}/balloons` | `[{ "color": "red", "shape": "cube", "size": 1 }]`                                                                                                       | `400` `Item 0: shape must be one of round, heart, star`; nothing is inserted |
 | 3   | Not an array    | POST   | `{{baseUrl}}/balloons` | `{ "color": "red", "shape": "heart", "size": 1 }`                                                                                                        | `400` `Body must be an array of 1-100 balloons`                              |
 
-Copy the `id` of the blue balloon for the next block.
+Copy the `id` of the blue balloon for block 6.
 
-### 5. Balloons by id — `updateOne`, `replaceOne`, `deleteOne`
+### 5. Balloon statistics — `aggregate`
+
+Run `node src/scripts/seed-prices.js` first, so that the balloons from block 4 have a `price`. No login needed.
+
+| #   | Request         | Method | URL                                                   | Body | Expected                                                                                                         |
+| --- | --------------- | ------ | ----------------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------- |
+| 1   | All statistics  | GET    | `{{baseUrl}}/balloons/stats`                          | —    | `200` one object per shape with `count`, `totalPrice`, `avgPrice`, `minPrice`, `maxPrice`; largest `count` first |
+| 2   | One shape       | GET    | `{{baseUrl}}/balloons/stats?shape=heart`              | —    | `200` array with one object, `"shape": "heart"`                                                                  |
+| 3   | Price range     | GET    | `{{baseUrl}}/balloons/stats?minPrice=50&maxPrice=150` | —    | `200` only balloons priced 50–150 are counted                                                                    |
+| 4   | Recent balloons | GET    | `{{baseUrl}}/balloons/stats?days=1`                   | —    | `200` only balloons created in the last 24 hours are counted                                                     |
+| 5   | Invalid price   | GET    | `{{baseUrl}}/balloons/stats?minPrice=cheap`           | —    | `400` `minPrice must be a number`                                                                                |
+| 6   | Invalid days    | GET    | `{{baseUrl}}/balloons/stats?days=0`                   | —    | `400` `days must be a positive number`                                                                           |
+
+### 6. Balloons by id — `updateOne`, `replaceOne`, `deleteOne`
 
 | #   | Request           | Method | URL                               | Body (raw JSON)                                    | Expected                                                            |
 | --- | ----------------- | ------ | --------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------- |
@@ -220,7 +308,7 @@ Copy the `id` of the blue balloon for the next block.
 | 4   | Delete balloon    | DELETE | `{{baseUrl}}/balloons/:balloonId` | —                                                  | `200` `{ "message": "1 balloon <id> successfully deleted" }`        |
 | 5   | Delete it again   | DELETE | `{{baseUrl}}/balloons/:balloonId` | —                                                  | `404` `Balloon with <id> not found`                                 |
 
-### 6. Balloons by filter — `updateMany`, `deleteMany`
+### 7. Balloons by filter — `updateMany`, `deleteMany`
 
 Uses the two red hearts from block 4.
 
@@ -232,7 +320,7 @@ Uses the two red hearts from block 4.
 | 4   | Delete many     | DELETE | `{{baseUrl}}/balloons?color=pink&shape=heart` | —                     | `200` `{ "message": "2 document/s deleted" }`                        |
 | 5   | No filter       | DELETE | `{{baseUrl}}/balloons`                        | —                     | `400` `Query param "color" is required`; the collection is untouched |
 
-### 7. Logout
+### 8. Logout
 
 | #   | Request | Method | URL                       | Body | Expected                                                                      |
 | --- | ------- | ------ | ------------------------- | ---- | ----------------------------------------------------------------------------- |
@@ -242,4 +330,11 @@ There is no `npm test` script; the tables above are the manual test plan.
 
 ## Known limitations
 
-See `ANALYSIS.md` for the current list of observations, open bugs, and improvement ideas.
+- **Cursors are not used yet.** All reads load the full result into an array.
+- **`uniqueNames` in `/balloons/stats` is always `0`**, because balloons have no `name` field.
+- **New balloons have no `price`** until the seed script is run again. Without a price they are counted in `/balloons/stats` but add nothing to the sums, and they are left out when `minPrice` or `maxPrice` is used.
+- **`PUT /balloons/:balloonId` replaces the whole document**, so `createdAt` and `price` are lost unless the body contains them. The bodies of `PUT` and `PATCH /balloons/:balloonId` are not validated.
+- **`DELETE /users/:userId` deletes the user but answers `500`.**
+- **The `/balloons` routes need no login**, including the delete routes.
+
+The full list of observations, open bugs and fixes is kept in `ANALYSIS.md`, a local file that is not part of the repository.
